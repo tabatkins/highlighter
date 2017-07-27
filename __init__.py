@@ -16,7 +16,7 @@ ColoredText = collections.namedtuple('ColoredText', ['text', 'color'])
 def die(msg, *rargs, **kwargs):
     raise Exception(msg.format(*rargs, **kwargs))
 
-def highlight(html, lang=None, lineNumbers=False, lineStart=1, lineHighlights=set()):
+def highlight(html, lang=None, lineNumbers=False, lineStart=1, lineHighlights=set(), output="json"):
     styles = ""
     # Find whether to highlight, and what the lang is
     lang = determineHighlightLang(doc, el)
@@ -32,7 +32,12 @@ def highlight(html, lang=None, lineNumbers=False, lineStart=1, lineHighlights=se
             if isinstance(lineHighlights, basestring):
                 lineHighlights = parseHighlightString(lineHighlights)
             styles += lineHighlightingStyles
-    return html, styles
+    if output == "json":
+        return html, styles
+    elif output == "html":
+        return serializeToHtml(html), styles
+    else:
+        die("Unknown output mode '{0}', should be 'json' or 'html'.", output)
 
 
 def parseHighlightString(text):
@@ -104,10 +109,13 @@ def highlightWithWebIDL(text, el):
         def markupEnumValue(self, text, construct):
             return ('\1s\2', '\3')
 
-    widl = parser.Parser(text, IDLUI())
-    return parseWidlIntoCT(unicode(widl.markup(HighlightMarker())))
+    if "\1" in text or "\2" in text or "\3" in text:
+        die("WebIDL text contains some U+0001-0003 characters, which are used by the highlighter. This block can't be highlighted. :(")
 
-def parseWidlIntoCT(widlText):
+    widl = parser.Parser(text, IDLUI())
+    return coloredTextFromWidlStack(unicode(widl.markup(HighlightMarker())))
+
+def coloredTextFromWidlStack(widlText):
     coloredTexts = collections.deque()
     colors = []
     currentText = ""
@@ -223,6 +231,12 @@ def clearChilden(node):
     else:
         return node
 
+def tagName(node):
+    if isElement(node):
+        return node[0]
+    else:
+        return None
+
 def attrs(node):
     if isElement(node):
         return node[1]
@@ -243,6 +257,27 @@ def appendChild(node, *children):
 
 def isEmpty(node):
     return len(node) == 2
+
+def escapeHtml(str):
+    return (str
+        .replace("&", "&amp;")
+        .replace("'", "&apos;")
+        .replace('"', "&quot;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;"))
+
+def serializeToHtml(node):
+    html = "<{0}".format(tagName(node))
+    for attrName, attrValue in attrs(node).items():
+        html += " {0}='{1}'".format(escapeHtml(attrName), escapeHtml(attrValue))
+    html += ">"
+    for child in children(node):
+        if isElement(child):
+            html += serializeToHtml(child)
+        else:
+            html += escapeHtml(child)
+    html += "</{0}>".format(tagName(node))
+
 
 def coloredTextFromRawTokens(text):
     colorFromName = {
