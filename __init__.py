@@ -269,7 +269,7 @@ def escapeHtml(str):
 def serializeToHtml(node):
     html = "<{0}".format(tagName(node))
     for attrName, attrValue in attrs(node).items():
-        html += " {0}='{1}'".format(escapeHtml(attrName), escapeHtml(attrValue))
+        html += " {0}='{1}'".format(attrName, escapeHtml(attrValue))
     html += ">"
     for child in children(node):
         if isElement(child):
