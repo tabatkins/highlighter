@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, unicode_literals
 import collections
+import sys
 from . import lexers
-from .widlparser.widlparser import parser
 from .pygments import pygments as pyg
-from .pygments.pygments.lexers import get_lexer_by_name
 from .pygments.pygments import formatters
+from .pygments.pygments.lexers import get_lexer_by_name
+from .widlparser.widlparser import parser
 
 customLexers = {
     "css": lexers.CSSLexer()
@@ -19,7 +20,6 @@ def die(msg, *rargs, **kwargs):
 def highlight(html, lang=None, lineNumbers=False, lineStart=1, lineHighlights=set(), output="json"):
     styles = ""
     # Find whether to highlight, and what the lang is
-    lang = determineHighlightLang(doc, el)
     if lang:
         html = highlightEl(html, lang)
         styles += highlightStyles
@@ -574,3 +574,6 @@ lineHighlightingStyles = '''
     color: gray;
 }
 '''
+
+if __name__ == "__main__":
+    print sys.argv
