@@ -18,6 +18,7 @@
 #        token.Comment: "#708090"
 #    }
 #print formatters.HtmlFormatter(style=PrismStyle).get_style_defs('.highlight')
+
 highlight = '''
 .highlight:not(.idl) { background: hsl(24, 20%, 95%); }
 code.highlight { padding: .1em; border-radius: .3em; }
@@ -77,49 +78,63 @@ pre.highlight, pre > code.highlight { display: block; padding: 1em; margin: .5em
 '''
 
 lineNumber = '''
+.line-numbered {
+    display: grid !important;
+    grid-template-columns: min-content 1fr;
+    grid-auto-flow: row;
+}
+.line-numbered > *,
+.line-numbered::before,
+.line-numbered::after {
+    grid-column: 1/-1;
+}
+.line-no {
+    grid-column: 1;
+    color: gray;
+}
 .line {
-    padding-left: 1.4em;
-    position: relative;
+    grid-column: 2;
 }
 .line:hover {
     background: rgba(0,0,0,.05);
 }
-.line[line]::before {
-    content: attr(line);
-    position: absolute;
-    top: 0;
-    left: 1px;
-    color: gray;
+.line-no[data-line]::before {
+    padding: 0 .5em 0 .1em;
+    content: attr(data-line);
 }
-.line[line-end]::after {
-    content: attr(line-end);
-    position: absolute;
-    bottom: 0;
-    left: 1px;
-    color: gray;
+.line-no[data-line-end]::after {
+    padding: 0 .5em 0 .1em;
+    content: attr(data-line-end);
 }
 '''
 
 lineHighlight = '''
+.line-numbered {
+    display: grid;
+    grid-template-columns: min-content 1fr;
+    grid-auto-flow: rows;
+}
+.line-numbered > *,
+.line-numbered::before,
+.line-numbered::after {
+    grid-column: 1/-1;
+}
+.line-no {
+    grid-column: 1;
+    color: gray;
+}
 .line {
-    padding-left: 1.4em;
-    position: relative;
+    grid-column: 2;
 }
 .line.highlight-line {
     background: rgba(0,0,0,.05);
 }
-.line.highlight-line[line]::before {
-    content: attr(line);
-    position: absolute;
-    top: 0;
-    left: 1px;
-    color: gray;
+.line-no.highlight-line[data-line]::before {
+    padding: 0 .5em 0 .1em;
+    content: attr(data-line);
 }
-.line.highlight-line[line-end]::after {
-    content: attr(line-end);
-    position: absolute;
-    bottom: 0;
-    left: 1px;
-    color: gray;
+.line-no.highlight-line[data-line-end]::after {
+    padding: 0 .5em 0 .1em;
+    content: attr(data-line-end);
 }
 '''
