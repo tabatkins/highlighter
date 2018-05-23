@@ -5,13 +5,13 @@ import sys
 from . import lexers
 from . import styles
 from .dom import *
-from .pygments import pygments as pyg
-from .pygments.pygments import formatters
-from .pygments.pygments.lexers import get_lexer_by_name
-from .widlparser.widlparser import parser
 
+
+def loadCSSLexer():
+    from .lexers import CSSLexer
+    return CSSLexer()
 customLexers = {
-    "css": lexers.CSSLexer()
+    "css": loadCSSLexer
 }
 
 ColoredText = collections.namedtuple('ColoredText', ['text', 'color'])
@@ -27,13 +27,13 @@ def highlight(html, lang=None, lineNumbers=False, lineStart=1, lineHighlights=se
         css += styles.highlight
     # Find whether to add line numbers
     if lineNumbers or lineHighlights:
-        html = addLineWrappers(html, numbers=lineNumbers, start=lineStart, highlights=lineHighlights)
         if lineNumbers:
             css += style.lineNumber
         if lineHighlights:
             if isinstance(lineHighlights, basestring):
                 lineHighlights = parseHighlightString(lineHighlights)
             css += styles.lineHighlight
+        html = addLineWrappers(html, numbers=lineNumbers, start=lineStart, highlights=lineHighlights)
     if output == "json":
         return html, css
     elif output == "html":
@@ -88,6 +88,7 @@ def textContent(el):
 
 
 def highlightWithWebIDL(text, el):
+    from .widlparser.widlparser import parser
     '''
     Trick the widlparser emitter,
     which wants to output HTML via wrapping with start/end tags,
@@ -113,6 +114,7 @@ def highlightWithWebIDL(text, el):
 
     if "\1" in text or "\2" in text or "\3" in text:
         die("WebIDL text contains some U+0001-0003 characters, which are used by the highlighter. This block can't be highlighted. :(")
+        return
 
     widl = parser.Parser(text, IDLUI())
     return coloredTextFromWidlStack(unicode(widl.markup(HighlightMarker())))
@@ -164,10 +166,13 @@ def coloredTextFromWidlStack(widlText):
 
 
 def highlightWithPygments(text, lang, el):
+    import pygments
+    from pygments import formatters
     lexer = lexerFromLang(lang)
     if lexer is None:
-        die("'{0}' isn't a known syntax-highlighting language. See http://pygments.org/docs/lexers/.", lang)
-    rawTokens = pyg.highlight(text, lexer, formatters.RawTokenFormatter())
+        die("'{0}' isn't a known syntax-highlighting language. See http://pygments.org/docs/lexers/. Seen on:\n{1}", lang, outerHTML(el), el=el)
+        return
+    rawTokens = pygments.highlight(text, lexer, formatters.RawTokenFormatter())
     coloredText = coloredTextFromRawTokens(rawTokens)
     return coloredText
 
@@ -180,7 +185,7 @@ def mergeHighlighting(el, coloredText):
     # the markup structure is a flat list of sibling elements containing raw text
     # (and maybe some un-highlighted raw text between them).
     def createEl(color, text):
-        return ["span", {"class":color}, text]
+        return E.span({"class":color}, text)
 
     def colorizeEl(el, coloredText):
         elChildren = children(el)
@@ -331,10 +336,11 @@ def normalizeLanguageName(lang):
 
 def lexerFromLang(lang):
     if lang in customLexers:
-        return customLexers[lang]
+        return customLexers[lang]()
     try:
+        from pygments.lexers import get_lexer_by_name
         return get_lexer_by_name(lang, encoding="utf-8", stripAll=True)
-    except pyg.util.ClassNotFound:
+    except:
         return None
 
 
@@ -343,7 +349,7 @@ def addLineWrappers(el, numbers=True, start=1, highlights=None):
     # Add an attr for the line number, and if needed, the end line.
     if highlights is None:
         highlights = set()
-    lineWrapper = ["div", {"class": "line"}]
+    lineWrapper = E.span({"class": "line"})
     elChildren = children(el)
     el = clearChildren(el)
     for node in elChildren:
@@ -354,39 +360,35 @@ def addLineWrappers(el, numbers=True, start=1, highlights=None):
                 if "\n" in node:
                     pre, _, post = node.partition("\n")
                     appendChild(lineWrapper, pre)
+                    appendChild(el, E.span({"class":"line-no"}))
                     appendChild(el, lineWrapper)
-                    lineWrapper = ["div", {"class": "line"}]
+                    lineWrapper = E.span({"class": "line"})
                     node = post
                 else:
                     appendChild(lineWrapper, node)
                     break
     if len(lineWrapper):
+        appendChild(el, E.span({"class": "line-no"}))
         appendChild(el, lineWrapper)
     # Number the lines
     lineNumber = start
-    for node in children(el):
-        if isElement(node):
-            if isEmpty(node):
-                # Blank line; since I removed the \n from the source
-                # and am relying on <div> for lines now,
-                # this'll collapse to zero-height and mess things up.
-                # Add a single space to keep it one line tall.
-                appendChild(node, " ")
+    for lineNo, node in grouper(children(el), 2):
+        if numbers or lineNumber in highlights:
+            attrs(lineNo).set("data-line", unicode(lineNumber))
+        if lineNumber in highlights:
+            addClass(node, "highlight-line")
+            addClass(lineNo, "highlight-line")
+        internalNewlines = countInternalNewlines(node)
+        if internalNewlines:
+            for i in range(1, internalNewlines+1):
+                if (lineNumber + i) in highlights:
+                    addClass(lineNo, "highlight-line")
+                    addClass(node, "highlight-line")
+                    attrs(lineNo).set("data-line", unicode(lineNumber))
+            lineNumber += internalNewlines
             if numbers:
-                attrs(node).set("line", unicode(lineNumber))
-            if lineNumber in highlights:
-                attrs(node).set("line", unicode(lineNumber))
-                addClass(node, "highlight-line")
-            internalNewlines = countInternalNewlines(node)
-            if internalNewlines:
-                for i in range(1, internalNewlines+1):
-                    if (lineNumber + i) in highlights:
-                        addClass(node, "highlight-line")
-                        attrs(node).set("line", unicode(lineNumber))
-                lineNumber += internalNewlines
-                if numbers:
-                    attrs(node).set("line-end", unicode(lineNumber))
-            lineNumber += 1
+                attrs(lineNo).set("data-line-end", unicode(lineNumber))
+    addClass(el, "line-numbered")
     return el
 
 def countInternalNewlines(el):

@@ -50,3 +50,15 @@ def escapeHtml(str):
         .replace('"', "&quot;")
         .replace("<", "&lt;")
         .replace(">", "&gt;"))
+
+class ElementCreationHelper:
+    def __getattr__(self, name):
+        def _creater(*children):
+            if children and isinstance(children[0], dict):
+                attrs = children[0]
+                children = children[1:]
+            else:
+                attrs = {}
+            return [name, attrs, *children]
+        return _creater
+E = ElementCreationHelper()
