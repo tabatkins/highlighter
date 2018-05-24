@@ -10,7 +10,7 @@ def children(node, clear=False):
     else:
         return []
 
-def clearChilden(node):
+def clearChildren(node):
     if isElement(node):
         return node[:2]
     else:
@@ -54,11 +54,12 @@ def escapeHtml(str):
 class ElementCreationHelper:
     def __getattr__(self, name):
         def _creater(*children):
+            children = list(children)
             if children and isinstance(children[0], dict):
                 attrs = children[0]
                 children = children[1:]
             else:
                 attrs = {}
-            return [name, attrs, *children]
+            return [name, attrs] + children
         return _creater
 E = ElementCreationHelper()

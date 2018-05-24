@@ -87,7 +87,7 @@ def textContent(el):
     return "".join(textIterator(el))
 
 
-def highlightWithWebIDL(text, el):
+def highlightWithWebIDL(text):
     from .widlparser.widlparser import parser
     '''
     Trick the widlparser emitter,
@@ -165,12 +165,12 @@ def coloredTextFromWidlStack(widlText):
     return coloredTexts
 
 
-def highlightWithPygments(text, lang, el):
-    import pygments
-    from pygments import formatters
+def highlightWithPygments(text, lang):
+    from .pygments import pygments
+    from .pygments.pygments import formatters
     lexer = lexerFromLang(lang)
     if lexer is None:
-        die("'{0}' isn't a known syntax-highlighting language. See http://pygments.org/docs/lexers/. Seen on:\n{1}", lang, outerHTML(el), el=el)
+        die("'{0}' isn't a known syntax-highlighting language. See http://pygments.org/docs/lexers/.", lang)
         return
     rawTokens = pygments.highlight(text, lexer, formatters.RawTokenFormatter())
     coloredText = coloredTextFromRawTokens(rawTokens)
@@ -232,6 +232,7 @@ def serializeToHtml(node):
         else:
             html += escapeHtml(child)
     html += "</{0}>".format(tagName(node))
+    return html
 
 
 def coloredTextFromRawTokens(text):
@@ -338,7 +339,7 @@ def lexerFromLang(lang):
     if lang in customLexers:
         return customLexers[lang]()
     try:
-        from pygments.lexers import get_lexer_by_name
+        from .pygments.pygments.lexers import get_lexer_by_name
         return get_lexer_by_name(lang, encoding="utf-8", stripAll=True)
     except:
         return None
