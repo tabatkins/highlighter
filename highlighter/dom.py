@@ -24,16 +24,20 @@ def tagName(node):
 
 def attrs(node):
     if isElement(node):
+        if len(node) == 1:
+            a = {}
+            node.append(a)
+            return a
         return node[1]
     else:
         return {}
 
 def addClass(node, cls):
     a = attrs(node)
-    if "class" in attrs:
-        attrs["class"] += " " + cls
+    if "class" in a:
+        a["class"] += " " + cls
     else:
-        attrs["class"] = cls
+        a["class"] = cls
     return node
 
 def appendChild(node, *children):

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, unicode_literals
 import collections
+import itertools
+import re
 import sys
-from . import lexers
 from . import styles
 from .dom import *
 
@@ -28,7 +29,7 @@ def highlight(html, lang=None, lineNumbers=False, lineStart=1, lineHighlights=se
     # Find whether to add line numbers
     if lineNumbers or lineHighlights:
         if lineNumbers:
-            css += style.lineNumber
+            css += styles.lineNumber
         if lineHighlights:
             if isinstance(lineHighlights, basestring):
                 lineHighlights = parseHighlightString(lineHighlights)
@@ -375,7 +376,7 @@ def addLineWrappers(el, numbers=True, start=1, highlights=None):
     lineNumber = start
     for lineNo, node in grouper(children(el), 2):
         if numbers or lineNumber in highlights:
-            attrs(lineNo).set("data-line", unicode(lineNumber))
+            attrs(lineNo)["data-line"] = unicode(lineNumber)
         if lineNumber in highlights:
             addClass(node, "highlight-line")
             addClass(lineNo, "highlight-line")
@@ -385,10 +386,11 @@ def addLineWrappers(el, numbers=True, start=1, highlights=None):
                 if (lineNumber + i) in highlights:
                     addClass(lineNo, "highlight-line")
                     addClass(node, "highlight-line")
-                    attrs(lineNo).set("data-line", unicode(lineNumber))
+                    attrs(lineNo)["data-line"] = unicode(lineNumber)
             lineNumber += internalNewlines
             if numbers:
-                attrs(lineNo).set("data-line-end", unicode(lineNumber))
+                attrs(lineNo)["data-line-end"] = unicode(lineNumber)
+        lineNumber += 1
     addClass(el, "line-numbered")
     return el
 
@@ -400,6 +402,13 @@ def countInternalNewlines(el):
         else:
             count += node.count("\n")
     return count
+
+
+def grouper(iterable, n, fillvalue=None):
+    "Collect data into fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+    args = [iter(iterable)] * n
+    return itertools.izip_longest(fillvalue=fillvalue, *args)
 
 
 
