@@ -24,11 +24,12 @@ converted into JSON using the following transformation:
 
 That is, each element is encoded as an array,
 with the first item being the tagname,
-the second being an object containing the attributes,
+the second being an object containing the attributes
+(if no attributes, an empty object is still required),
 and the remaining items being the children of the element,
 either straight text or further nested elements.
 
-It's generally assumed that the root element will be a `["pre"]`,
+It's generally assumed that the root element will be a `["pre", {}]`,
 but that's not strictly necessary;
 the default styling uses CSS Grid,
 and doesn't depend on newlines being preserved.
