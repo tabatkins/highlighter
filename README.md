@@ -11,6 +11,21 @@ import highlighter
 html,css = highlighter.highlight(elementGoesHere, lang="whatever")
 ```
 
+Alternately, you can invoke it directly from the command line,
+passing it a string of JSON on stdin,
+and it will output via stdout:
+
+```bash
+echo '["pre", {}, "interface Foo {};"]' | ./__init__.py webidl
+```
+
+When invoked this way,
+it will return a string containing a JSON object with `html` and `css` keys:
+the `html` value will be the marked-up HTML, still in JSON form;
+the `css` value will be a string containing CSS.
+
+(Run `highlighter/__init__.py -h` to see all the command-line options.)
+
 -----
 
 The `elementGoesHere` argument needs to be a chunk of HTML,

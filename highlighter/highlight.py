@@ -20,12 +20,10 @@ ColoredText = collections.namedtuple('ColoredText', ['text', 'color'])
 def die(msg, *rargs, **kwargs):
     raise Exception(msg.format(*rargs, **kwargs))
 
-def highlight(html, lang=None, lineNumbers=False, lineStart=1, lineHighlights=set(), output="json"):
-    css = ""
-    # Find whether to highlight, and what the lang is
-    if lang:
-        html = highlightEl(html, lang)
-        css += styles.highlight
+def highlight(html, lang, lineNumbers=False, lineStart=1, lineHighlights=set(), output="json"):
+    html = highlightEl(html, lang)
+    css = styles.highlight
+
     # Find whether to add line numbers
     if lineNumbers or lineHighlights:
         if lineNumbers:
@@ -35,6 +33,7 @@ def highlight(html, lang=None, lineNumbers=False, lineStart=1, lineHighlights=se
                 lineHighlights = parseHighlightString(lineHighlights)
             css += styles.lineHighlight
         html = addLineWrappers(html, numbers=lineNumbers, start=lineStart, highlights=lineHighlights)
+
     if output == "json":
         return html, css
     elif output == "html":
