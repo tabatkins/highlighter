@@ -97,9 +97,9 @@ def highlightWithWebIDL(text):
         def markupTypeName(self, text, construct):
             return ('\1n\2', '\3')
         def markupName(self, text, construct):
-            return ('\1nv\2', '\3')
+            return ('\1g\2', '\3')
         def markupKeyword(self, text, construct):
-            return ('\1kt\2', '\3')
+            return ('\1b\2', '\3')
         def markupEnumValue(self, text, construct):
             return ('\1s\2', '\3')
 
@@ -237,20 +237,20 @@ def coloredTextFromRawTokens(text):
         "Token.Name": "n",
         "Token.Operator": "o",
         "Token.Punctuation": "p",
-        "Token.Comment.Multiline": "cm",
+        "Token.Comment.Multiline": "d",
         "Token.Comment.Preproc": "cp",
         "Token.Comment.Single": "c1",
         "Token.Comment.Special": "cs",
         "Token.Keyword.Constant": "kc",
-        "Token.Keyword.Declaration": "kd",
+        "Token.Keyword.Declaration": "a",
         "Token.Keyword.Namespace": "kn",
         "Token.Keyword.Pseudo": "kp",
         "Token.Keyword.Reserved": "kr",
-        "Token.Keyword.Type": "kt",
+        "Token.Keyword.Type": "b",
         "Token.Literal.Date": "ld",
         "Token.Literal.Number": "m",
         "Token.Literal.String": "s",
-        "Token.Name.Attribute": "na",
+        "Token.Name.Attribute": "e",
         "Token.Name.Class": "nc",
         "Token.Name.Constant": "no",
         "Token.Name.Decorator": "nd",
@@ -260,8 +260,8 @@ def coloredTextFromRawTokens(text):
         "Token.Name.Label": "nl",
         "Token.Name.Namespace": "nn",
         "Token.Name.Property": "py",
-        "Token.Name.Tag": "nt",
-        "Token.Name.Variable": "nv",
+        "Token.Name.Tag": "f",
+        "Token.Name.Variable": "g",
         "Token.Operator.Word": "ow",
         "Token.Literal.Number.Bin": "mb",
         "Token.Literal.Number.Float": "mf",
@@ -271,13 +271,13 @@ def coloredTextFromRawTokens(text):
         "Token.Literal.String.Backtick": "sb",
         "Token.Literal.String.Char": "sc",
         "Token.Literal.String.Doc": "sd",
-        "Token.Literal.String.Double": "s2",
+        "Token.Literal.String.Double": "u",
         "Token.Literal.String.Escape": "se",
         "Token.Literal.String.Heredoc": "sh",
         "Token.Literal.String.Interpol": "si",
         "Token.Literal.String.Other": "sx",
         "Token.Literal.String.Regex": "sr",
-        "Token.Literal.String.Single": "s1",
+        "Token.Literal.String.Single": "t",
         "Token.Literal.String.Symbol": "ss",
         "Token.Name.Variable.Class": "vc",
         "Token.Name.Variable.Global": "vg",
