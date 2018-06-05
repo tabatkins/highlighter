@@ -20,7 +20,7 @@ ColoredText = collections.namedtuple('ColoredText', ['text', 'color'])
 def die(msg, *rargs, **kwargs):
     raise Exception(msg.format(*rargs, **kwargs))
 
-def highlight(html, lang, lineNumbers=False, lineStart=1, lineHighlights=set(), output="json", unescape=False):
+def highlight(html, lang, lineNumbers=False, lineStart=1, lineHighlights=set(), output="json", unescape=False, **unusedKwargs):
     if unescape:
         html = mapTextNodes(html, unescapeHtml)
     html = highlightEl(html, lang)

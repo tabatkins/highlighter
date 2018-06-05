@@ -27,11 +27,21 @@ def cli():
 	                help="Dictates what line number the first line of output should be considered as, affecting --numbers and --highlights.")
 	ap.add_argument("--unescape", dest="unescape", action="store_true",
 	                help="Does a quick unescape pass over the input HTML, reverting one level of HTML escapes for &<>'\". Use if your DOM implementation doesn't convert escapes to text. Won't unescape any other HTML escapes, so beware!")
+	ap.add_argument("--just", dest="just", choices=["html", "css"], default=None,
+	                help="Returns just the HTML or CSS value (no wrapping JSON object).")
 	options = vars(ap.parse_args())
 
 	input = json.loads(sys.stdin.read(), encoding="utf-8")
 	html,css = highlight(input, **options)
-	print json.dumps({"html":html, "css":css})
+	if options['just'] == "html":
+	    if options['output'] == "html":
+	        print html
+	    else:
+	        print json.dumps(html)
+	elif options['just'] == "css":
+	    print css
+	else:
+	    print json.dumps({"html":html, "css":css})
 
 if __name__ == '__main__':
 	cli()
