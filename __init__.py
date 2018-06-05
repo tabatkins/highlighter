@@ -25,6 +25,8 @@ def cli():
 	                help="A comma-separated list of line numbers and ranges, like '1, 3-5', which should be specially highlighted in the output.")
 	ap.add_argument("--start", dest="lineStart", type=int, default=1,
 	                help="Dictates what line number the first line of output should be considered as, affecting --numbers and --highlights.")
+	ap.add_argument("--unescape", dest="unescape", action="store_true",
+	                help="Does a quick unescape pass over the input HTML, reverting one level of HTML escapes for &<>'\". Use if your DOM implementation doesn't convert escapes to text. Won't unescape any other HTML escapes, so beware!")
 	options = vars(ap.parse_args())
 
 	input = json.loads(sys.stdin.read(), encoding="utf-8")

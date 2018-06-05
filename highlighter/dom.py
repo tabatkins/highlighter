@@ -20,6 +20,21 @@ def textContent(el):
                     yield ret
     return "".join(textIterator(el))
 
+def mapTextNodes(node, fn):
+    if isElement(node):
+        ret = copyNode(clearChildren(node))
+        for child in children(node):
+            ret.append(mapTextNodes(child, fn))
+        return ret
+    else:
+        return fn(node)
+
+def copyNode(node):
+    if isElement(node):
+        return [node[0], node[1].copy()] + map(copyNode, node[2:])
+    else:
+        return node
+
 def clearChildren(node):
     if isElement(node):
         return node[:2]
@@ -64,6 +79,14 @@ def escapeHtml(str):
         .replace('"', "&quot;")
         .replace("<", "&lt;")
         .replace(">", "&gt;"))
+
+def unescapeHtml(str):
+    return (str
+        .replace("&amp;", "&")
+        .replace("&apos;", "'")
+        .replace("&quot;", '"')
+        .replace("&lt;", "<")
+        .replace("&gt;", ">"))
 
 class ElementCreationHelper:
     def __getattr__(self, name):
