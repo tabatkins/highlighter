@@ -90,6 +90,7 @@ def unescapeHtml(str):
 
 class ElementCreationHelper:
     def __getattr__(self, name):
+        name = name.replace("_", "-")
         def _creater(*children):
             children = list(children)
             if children and isinstance(children[0], dict):

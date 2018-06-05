@@ -176,7 +176,7 @@ def mergeHighlighting(el, coloredText):
     # the markup structure is a flat list of sibling elements containing raw text
     # (and maybe some un-highlighted raw text between them).
     def createEl(color, text):
-        return E.span({"class":color}, text)
+        return E.c_({color:""}, text)
 
     def colorizeEl(el, coloredText):
         elChildren = children(el)
@@ -215,7 +215,10 @@ def mergeHighlighting(el, coloredText):
 def serializeToHtml(node):
     html = "<{0}".format(tagName(node))
     for attrName, attrValue in attrs(node).items():
-        html += " {0}='{1}'".format(attrName, escapeHtml(attrValue))
+        if attrValue == "":
+            html += " {0}".format(attrName)
+        else:
+            html += " {0}='{1}'".format(attrName, escapeHtml(attrValue))
     html += ">"
     for child in children(node):
         if isElement(child):
