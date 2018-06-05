@@ -83,7 +83,7 @@ def textContent(el):
                 yield item
             else:
                 for ret in textIterator(item):
-                    yield item
+                    yield ret
     return "".join(textIterator(el))
 
 
