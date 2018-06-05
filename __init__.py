@@ -18,7 +18,7 @@ def cli():
 	ap.add_argument("lang",
 	                help="What language the input should be highlighted as. Accepts all Pygments languages, plus 'webidl'.")
 	ap.add_argument("--output", dest="output", choices=["json", "html"], default="json",
-	                help="Pass 'json' to output the highlighted results as JSON-encoded HTML, or 'html' to output as an HTML string.")
+	                help="Pass 'json' to output the highlighted results as JSON-encoded HTML, or 'html' to output as an HTML string. Defaults to json.")
 	ap.add_argument("--numbers", dest="lineNumbers", action="store_true",
 	                help="Include line numbers in the output.")
 	ap.add_argument("--highlights", dest="lineHighlights", default=None,
@@ -28,7 +28,7 @@ def cli():
 	ap.add_argument("--unescape", dest="unescape", action="store_true",
 	                help="Does a quick unescape pass over the input HTML, reverting one level of HTML escapes for &<>'\". Use if your DOM implementation doesn't convert escapes to text. Won't unescape any other HTML escapes, so beware!")
 	ap.add_argument("--just", dest="just", choices=["html", "css"], default=None,
-	                help="Returns just the HTML or CSS value (no wrapping JSON object).")
+	                help="Returns just the HTML or CSS value (no wrapping JSON object). Default is a JSON wrapper object with 'html' and 'css' keys.")
 	options = vars(ap.parse_args())
 
 	input = json.loads(sys.stdin.read(), encoding="utf-8")
