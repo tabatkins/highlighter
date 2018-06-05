@@ -76,17 +76,6 @@ def highlightEl(el, lang):
     return mergeHighlighting(el, coloredText)
 
 
-def textContent(el):
-    def textIterator(el):
-        for item in children(el):
-            if isinstance(item, basestring):
-                yield item
-            else:
-                for ret in textIterator(item):
-                    yield ret
-    return "".join(textIterator(el))
-
-
 def highlightWithWebIDL(text):
     from .widlparser.widlparser import parser
     '''

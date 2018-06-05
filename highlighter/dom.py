@@ -10,6 +10,16 @@ def children(node, clear=False):
     else:
         return []
 
+def textContent(el):
+    def textIterator(el):
+        for item in children(el):
+            if isinstance(item, basestring):
+                yield item
+            else:
+                for ret in textIterator(item):
+                    yield ret
+    return "".join(textIterator(el))
+
 def clearChildren(node):
     if isElement(node):
         return node[:2]
