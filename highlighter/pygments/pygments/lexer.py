@@ -15,17 +15,16 @@ import re
 import sys
 import time
 
-from pygments.filter import apply_filters, Filter
-from pygments.filters import get_filter_by_name
-from pygments.token import Error, Text, Other, _TokenType
-from pygments.util import get_bool_opt, get_int_opt, get_list_opt, \
+from .filter import apply_filters, Filter
+from .filters import get_filter_by_name
+from .token import Error, Text, Other, _TokenType
+from .util import get_bool_opt, get_int_opt, get_list_opt, \
     make_analysator, text_type, add_metaclass, iteritems, Future, guess_decode
-from pygments.regexopt import regex_opt
+from .regexopt import regex_opt
 
 __all__ = ['Lexer', 'RegexLexer', 'ExtendedRegexLexer', 'DelegatingLexer',
            'LexerContext', 'include', 'inherit', 'bygroups', 'using', 'this',
            'default', 'words']
-
 
 _encoding_map = [(b'\xef\xbb\xbf', 'utf-8'),
                  (b'\xff\xfe\0\0', 'utf-32'),

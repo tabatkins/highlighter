@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, unicode_literals
 import re
-from pygments.pygments.lexer import *
-from pygments.pygments.token import *
-
+from .pygments.pygments.lexer import RegexLexer, include, bygroups
+from .pygments.pygments.token import *
 
 class CSSLexer(RegexLexer):
     name = "CSS"
