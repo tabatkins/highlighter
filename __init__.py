@@ -34,14 +34,14 @@ def cli():
 	input = json.loads(sys.stdin.read(), encoding="utf-8")
 	html,css = highlight(input, **options)
 	if options['just'] == "html":
-	    if options['output'] == "html":
-	        print html
-	    else:
-	        print json.dumps(html)
+		if options['output'] == "html":
+			print html.encode('utf-8')
+		else:
+			print json.dumps(html).encode('utf-8')
 	elif options['just'] == "css":
-	    print css
+		print css.encode('utf-8')
 	else:
-	    print json.dumps({"html":html, "css":css})
+		print json.dumps({"html":html, "css":css}).encode('utf-8')
 
 if __name__ == '__main__':
 	cli()
