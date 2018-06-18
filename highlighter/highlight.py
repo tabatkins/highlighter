@@ -213,6 +213,7 @@ def mergeHighlighting(el, coloredText):
 
 
 def serializeToHtml(node):
+    voidEls = frozenset(["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"])
     html = "<{0}".format(tagName(node))
     for attrName, attrValue in attrs(node).items():
         if attrValue == "":
@@ -220,6 +221,8 @@ def serializeToHtml(node):
         else:
             html += " {0}='{1}'".format(attrName, escapeHtml(attrValue))
     html += ">"
+    if tagName(node) in voidEls:
+        return html
     for child in children(node):
         if isElement(child):
             html += serializeToHtml(child)
