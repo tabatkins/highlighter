@@ -3,7 +3,6 @@ from __future__ import division, unicode_literals
 import collections
 import itertools
 import re
-import sys
 from . import styles
 from .dom import *
 
@@ -410,4 +409,4 @@ def grouper(iterable, n, fillvalue=None):
 
 
 if __name__ == "__main__":
-    print sys.argv
+    raise Exception("Not intended to be run at command-line; run ../__init__.py.")
