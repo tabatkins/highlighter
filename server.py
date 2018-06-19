@@ -16,16 +16,17 @@ class myHandler(BaseHTTPRequestHandler):
 	#Handler for the GET requests
 	def do_GET(self):
 		input = urllib2.unquote(self.path[1:])
-		if not input.startswith("["):
+		lang,_,data = input.partition("?")
+		if not data.startswith("["):
 			do_404(self)
 			return
-		input = json.loads(input)
+		data = json.loads(data)
 
-		html,css = highlight(input, lang="html", output="html")
+		html,css = highlight(data, lang=lang, output="html", unescape=True)
 		self.send_response(200)
 		self.send_header('Content-type',"text/plain")
 		self.end_headers()
-		self.wfile.write(html)
+		self.wfile.write(html.encode("utf-8"))
 
 def do_404(handler):
 	handler.send_response(404)
