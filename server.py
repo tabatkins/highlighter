@@ -27,6 +27,8 @@ class myHandler(BaseHTTPRequestHandler):
 		self.send_header('Content-type',"text/plain")
 		self.end_headers()
 		self.wfile.write(html.encode("utf-8"))
+	def log_request(self, *args):
+		return
 
 def do_404(handler):
 	handler.send_response(404)
