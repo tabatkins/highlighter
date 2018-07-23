@@ -100,6 +100,7 @@ if they seem oddly ideosyncratic).
 <dl>
 <dt><code>--output=json</code> or <code>--output=html</code>
 <dd>
+
 Defaults to `json`.
 
 Determines whether the highlighted output is returned as JSON-encoded HTML
@@ -108,6 +109,7 @@ or just as a plain string of HTML.
 
 <dt><code>--numbers</code>
 <dd>
+
 If passed, adds line numbers to the output.
 
 Defaults to treating the first line as "1";
@@ -115,6 +117,7 @@ use in conjunction with `--start` for more customization.
 
 <dt><code>--highlights=&lt;range></code>
 <dd>
+
 Tells the processor which lines to specially highlight,
 by default giving them a darker background to draw the eye.
 
@@ -132,6 +135,7 @@ use in conjunction with `--start` for more customization.
 
 <dt><code>--start=&lt;number></code>
 <dd>
+
 Defaults to `1`.
 
 Tells the highlighter what number the first line should be treated as.
@@ -143,6 +147,7 @@ so the displayed line numbers will match up with those of the source file you're
 
 <dt><code>--just=html</code> or <code>--just=css</code>
 <dd>
+
 If passed, the output will be *just* the HTML or CSS for the highlighting,
 rather than a JSON object containing both.
 There will be no overall wrapping JSON object.
