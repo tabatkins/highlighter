@@ -1,6 +1,8 @@
 Highlighter
 ===========
 
+**(Important, see the note at the end about Pygments, or else this project won't work.)**
+
 This project extracts and abstracts [Bikeshed's](https://www.github.com/tabatkins/bikeshed) syntax-highlighting functionality for usage by other tools.
 
 To use, clone this git repo into your project folder,
@@ -86,3 +88,23 @@ Again, it defaults to assuming the first line is line 1,
 and you can change this by passing `lineStart`.
 
 The two options can be combined for both numbering and highlighting.
+
+Pygments Errors
+===============
+
+This project relies on the Pygments library for most of its highlighting.
+In an attempt to make this library standalone,
+I include a local copy of Pygments.
+As documented in [this Pygments issue](https://bitbucket.org/birkenfeld/pygments-main/issues/1448/pygments-relies-on-global-imports-of-its),
+however,
+Pygments actually *can't* be used stand-alone,
+as it is written to pervasively use global imports of its own code.
+
+I'm in the process of fixing this in my local copy of the Pygments source
+(and hope to upstream it eventually),
+but it's a decent chunk of work.
+In the meantime,
+you should `pip install pygments` to get a global install of the library as well,
+or else this project won't work.
+(Or otherwise install it with whatever tools you have,
+as documented [on the Pygments site](http://pygments.org/).)
