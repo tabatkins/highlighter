@@ -208,6 +208,8 @@ def mergeHighlighting(el, coloredText):
                 coloredText.appendleft(nextColor)
                 text = ''
         return nodes
+    # Remove empty colored texts
+    coloredText = collections.deque(x for x in coloredText if x.text)
     return colorizeEl(el, coloredText)
 
 
