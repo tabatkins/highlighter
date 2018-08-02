@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import urllib2
+import argparse
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from highlighter import highlight
@@ -39,12 +40,18 @@ def do_404(handler):
 try:
 	#Create a web server and define the handler to manage the
 	#incoming request
+	ap = argparse.ArgumentParser()
+	ap.add_argument("--quiet", dest="quiet", action="store_true",
+	                help="Don't report informational messages.")
+	options = vars(ap.parse_args())
 	server = HTTPServer(('', PORT_NUMBER), myHandler)
-	print 'Started httpserver on port ' , PORT_NUMBER
+	if not options['quiet']:
+		print 'Started httpserver on port ' , PORT_NUMBER
 
 	#Wait forever for incoming http requests
 	server.serve_forever()
 
 except KeyboardInterrupt:
-	print '^C received, shutting down the web server'
+	if not options['quiet']:
+		print '^C received, shutting down the web server'
 	server.socket.close()
