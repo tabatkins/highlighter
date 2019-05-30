@@ -78,15 +78,17 @@ def escapeHtml(str):
         .replace("'", "&apos;")
         .replace('"', "&quot;")
         .replace("<", "&lt;")
-        .replace(">", "&gt;"))
+        .replace(">", "&gt;")
+    )
 
 def unescapeHtml(str):
     return (str
-        .replace("&amp;", "&")
-        .replace("&apos;", "'")
-        .replace("&quot;", '"')
+        .replace("&gt;", ">")
         .replace("&lt;", "<")
-        .replace("&gt;", ">"))
+        .replace("&quot;", '"')
+        .replace("&apos;", "'")
+        .replace("&amp;", "&")
+    )
 
 class ElementCreationHelper:
     def __getattr__(self, name):
