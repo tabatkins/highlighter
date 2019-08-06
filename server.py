@@ -33,7 +33,7 @@ class myHandler(BaseHTTPRequestHandler):
 
 def do_404(handler):
 	handler.send_response(404)
-	handler.send_headers('Content-type','text/plain')
+	handler.send_header('Content-type','text/plain')
 	handler.end_headers()
 	handler.wfile.write("Invalid request, must send JSON as the path.")
 
