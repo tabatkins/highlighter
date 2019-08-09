@@ -19,6 +19,9 @@ ColoredText = collections.namedtuple('ColoredText', ['text', 'color'])
 def die(msg, *rargs, **kwargs):
     raise Exception(msg.format(*rargs, **kwargs))
 
+def warn(msg, *rargs, **kwargs):
+    print msg.format(*rargs, **kwargs)
+
 def highlight(html, lang, lineNumbers=False, lineStart=1, lineHighlights=set(), output="json", unescape=False, **unusedKwargs):
     if unescape:
         html = mapTextNodes(html, unescapeHtml)
@@ -90,7 +93,7 @@ def highlightWithWebIDL(text):
     '''
     class IDLUI(object):
         def warn(self, msg):
-            die("{0}", msg.rstrip())
+            warn("{0}", msg.rstrip())
     class HighlightMarker(object):
         # Just applies highlighting classes to IDL stuff.
         def markupTypeName(self, text, construct):
