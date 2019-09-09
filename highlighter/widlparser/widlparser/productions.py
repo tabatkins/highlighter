@@ -241,6 +241,10 @@ class PrimitiveType(Production): # UnsignedIntegerType | UnrestrictedFloatType |
             self.type = tokens.next().text
         self._didParse(tokens, False)
 
+    @property
+    def typeName(self):
+        return unicode(self.type)
+
     def _unicode(self):
         if (isinstance(self.type, basestring)):
             return unicode(self.type)
@@ -256,14 +260,66 @@ class PrimitiveType(Production): # UnsignedIntegerType | UnrestrictedFloatType |
         return '[PrimitiveType: ' + repr(self.type) + ']'
 
 
-class ConstType(Production): # PrimitiveType [Null] | identifier [Null]
+class Identifier(Production):  # identifier
+    @classmethod
+    def peek(cls, tokens):
+        token = tokens.pushPosition(True)
+        return tokens.popPosition(token and token.isIdentifier())
+
+    def __init__(self, tokens):
+        Production.__init__(self, tokens)
+        self._name = tokens.next().text
+        self._didParse(tokens, False)
+
+    @property
+    def name(self):
+        return self._name[1:] if ('_' == self._name[0]) else self._name
+
+    def _unicode(self):
+        return unicode(self._name)
+
+    def _markup(self, generator):
+        generator.addName(self._name)
+        return self
+
+    def __repr__(self):
+        return self._name.encode('ascii', 'replace')
+
+
+class TypeIdentifier(Production):  # identifier
+    @classmethod
+    def peek(cls, tokens):
+        token = tokens.pushPosition(True)
+        return tokens.popPosition(token and token.isIdentifier())
+
+    def __init__(self, tokens):
+        Production.__init__(self, tokens)
+        self._name = tokens.next().text
+        self._didParse(tokens, False)
+
+    @property
+    def name(self):
+        return self._name[1:] if ('_' == self._name[0]) else self._name
+
+    def _unicode(self):
+        return unicode(self._name)
+
+    def _markup(self, generator):
+        generator.addTypeName(self._name)
+        return self
+
+    def __repr__(self):
+        return self._name.encode('ascii', 'replace')
+
+
+class ConstType(Production): # PrimitiveType [Null] | Identifier [Null]
     @classmethod
     def peek(cls, tokens):
         if (PrimitiveType.peek(tokens)):
             Symbol.peek(tokens, '?')
             return True
-        token = tokens.pushPosition()
-        if (token and token.isIdentifier()):
+        tokens.pushPosition(False)
+        if (TypeIdentifier.peek(tokens)):
             Symbol.peek(tokens, '?')
             return tokens.popPosition(True)
         return tokens.popPosition(False)
@@ -272,8 +328,10 @@ class ConstType(Production): # PrimitiveType [Null] | identifier [Null]
         Production.__init__(self, tokens)
         if (PrimitiveType.peek(tokens)):
             self.type = PrimitiveType(tokens)
+            self.typeName = self.type.typeName
         else:
-            self.type = tokens.next().text
+            self.type = TypeIdentifier(tokens)
+            self.typeName = self.type.name
         self.null = Symbol(tokens, '?', False) if (Symbol.peek(tokens, '?')) else None
         self._didParse(tokens)
 
@@ -281,8 +339,8 @@ class ConstType(Production): # PrimitiveType [Null] | identifier [Null]
         return unicode(self.type) + (unicode(self.null) if (self.null) else '')
 
     def _markup(self, generator):
-        if (isinstance(self.type, basestring)):
-            generator.addTypeName(self.type)
+        if (isinstance(self.type, TypeIdentifier)):
+            self.type.markup(generator)
             if (self.null):
                 generator.addText(self.null)
                 return self.null
@@ -526,7 +584,7 @@ class SingleType(Production):    # NonAnyType | "any" [TypeSuffixStartingWithArr
 
 
 class NonAnyType(Production):   # PrimitiveType [TypeSuffix] | "ByteString" [TypeSuffix] | "DOMString" [TypeSuffix] |
-                                # "USVString" TypeSuffix | identifier [TypeSuffix] | "sequence" "<" TypeWithExtendedAttributes ">" [Null] |
+                                # "USVString" TypeSuffix | Identifier [TypeSuffix] | "sequence" "<" TypeWithExtendedAttributes ">" [Null] |
                                 # "object" [TypeSuffix] | "Error" TypeSuffix | "Promise" "<" ReturnType ">" [Null] | BufferRelatedType [Null] |
                                 # "FrozenArray" "<" TypeWithExtendedAttributes ">" [Null] | "record" "<" StringType "," TypeWithExtendedAttributes ">"
 
@@ -586,8 +644,8 @@ class NonAnyType(Production):   # PrimitiveType [TypeSuffix] | "ByteString" [Typ
         else:
             token = tokens.sneakPeek()
             if (token.isIdentifier()):
-                self.type = tokens.next().text
-                self.typeName = self.type
+                self.type = TypeIdentifier(tokens)
+                self.typeName = self.type.name
                 self.suffix = TypeSuffix(tokens) if (TypeSuffix.peek(tokens)) else None
             elif (token.isSymbol(('sequence', 'FrozenArray'))):
                 self.sequence = Symbol(tokens)
@@ -656,8 +714,8 @@ class NonAnyType(Production):   # PrimitiveType [TypeSuffix] | "ByteString" [Typ
             generator.addText(self._closeType)
             generator.addText(self.null)
             return self
-        if (isinstance(self.type, basestring)):
-            generator.addTypeName(self.type)
+        if (isinstance(self.type, TypeIdentifier)):
+            self.type.markup(generator)
             if (self.suffix):
                 self.suffix.markup(generator)
             return self
@@ -696,7 +754,7 @@ class UnionMemberType(Production):   # [ExtendedAttributeList] NonAnyType | Unio
         if (UnionType.peek(tokens)):
             TypeSuffix.peek(tokens)
             return True
-        tokens.pushPosition()
+        tokens.pushPosition(False)
         if (Symbol.peek(tokens, 'any')):
             if (Symbol.peek(tokens, '[')):
                 if (Symbol.peek(tokens, ']')):
@@ -942,13 +1000,12 @@ class Ignore(Production):    # "inherits" "getter" | "getraises" "(" ... ")" | "
         return ''.join([unicode(token) for token in self.tokens])
 
 
-class IgnoreMultipleInheritance(Production):    # [, identifier]...
+class IgnoreMultipleInheritance(Production):    # [, Identifier]...
     @classmethod
     def peek(cls, tokens):
         tokens.pushPosition(False)
         if (Symbol.peek(tokens, ',')):
-            token = tokens.peek()
-            if (token and token.isIdentifier()):
+            if (TypeIdentifier.peek(tokens)):
                 IgnoreMultipleInheritance.peek(tokens)
                 return tokens.popPosition(True)
         return tokens.popPosition(False)
@@ -956,30 +1013,33 @@ class IgnoreMultipleInheritance(Production):    # [, identifier]...
     def __init__(self, tokens, continuation = False):
         Production.__init__(self, tokens)
         self._comma = Symbol(tokens, ',')
-        self.inherit = tokens.next().text
+        self._inherit = TypeIdentifier(tokens)
         self.next = IgnoreMultipleInheritance(tokens, True) if (IgnoreMultipleInheritance.peek(tokens)) else None
         self._didParse(tokens)
         if (not continuation):
             tokens.didIgnore(self)
 
     def _unicode(self):
-        return unicode(self._comma) + self.inherit + (unicode(self.next) if (self.next) else '')
+        return unicode(self._comma) + unicode(self._inherit) + (unicode(self.next) if (self.next) else '')
+
+    @property
+    def inherit(self):
+        return self._inherit.name
 
     def _markup(self, generator):
         generator.addText(self._comma)
-        generator.addTypeName(self.inherit)
+        self._inherit.markup(generator)
         if (self.next):
             self.next.markup(generator)
         return self
 
 
-class Inheritance(Production):   # ":" identifier [IgnoreMultipleInheritance]
+class Inheritance(Production):   # ":" Identifier [IgnoreMultipleInheritance]
     @classmethod
     def peek(cls, tokens):
         tokens.pushPosition(False)
         if (Symbol.peek(tokens, ':')):
-            token = tokens.peek()
-            if (token and token.isIdentifier()):
+            if (TypeIdentifier.peek(tokens)):
                 IgnoreMultipleInheritance.peek(tokens)
                 return tokens.popPosition(True)
         return tokens.popPosition(False)
@@ -987,22 +1047,26 @@ class Inheritance(Production):   # ":" identifier [IgnoreMultipleInheritance]
     def __init__(self, tokens):
         Production.__init__(self, tokens)
         self._colon = Symbol(tokens, ':')
-        self.base = tokens.next().text
+        self._base = TypeIdentifier(tokens)
         self._ignore = IgnoreMultipleInheritance(tokens) if (IgnoreMultipleInheritance.peek(tokens)) else None
         self._didParse(tokens)
 
+    @property
+    def base(self):
+        return self._base.name
+
     def _unicode(self):
-        return unicode(self._colon) + self.base + (unicode(self._ignore) if (self._ignore) else '')
+        return unicode(self._colon) + unicode(self._base) + (unicode(self._ignore) if (self._ignore) else '')
 
     def _markup(self, generator):
         generator.addText(self._colon)
-        generator.addTypeName(self.base)
+        self._base.markup(generator)
         if (self._ignore):
             self._ignore.markup(generator)
         return self
 
     def __repr__(self):
-        return '[inherits: ' + self.base.encode('ascii', 'replace') + ']'
+        return '[inherits: ' + repr(self._base) + ']'
 
 
 class Default(Production):   # "=" ConstValue | "=" string | "=" "[" "]" | "=" "{" "}"
@@ -1058,11 +1122,12 @@ class Default(Production):   # "=" ConstValue | "=" string | "=" "[" "]" | "=" "
         return '[Default: ' + (repr(self.value) if (self.value) else unicode(self._open) + unicode(self._close)) + ']'
 
 
-class ArgumentName(Production):   # identifier | ArgumentNameKeyword
-    ArgumentNameKeywords = frozenset(['attribute', 'callback', 'const', 'creator', 'deleter', 'dictionary', 'enum',
-                                      'getter', 'implements', 'inherit', 'interface', 'iterable', 'legacycaller',
-                                      'legacyiterable', 'maplike', 'namespace', 'partial', 'required', 'setlike',
-                                      'setter', 'static', 'stringifier', 'typedef', 'unrestricted'])
+class ArgumentName(Production):   # Identifier | ArgumentNameKeyword
+    ArgumentNameKeywords = frozenset(['async', 'attribute', 'callback', 'const', 'constructor',
+                                      'deleter', 'dictionary', 'enum', 'getter', 'includes',
+                                      'inherit', 'interface', 'iterable', 'maplike', 'namespace',
+                                      'partial', 'required', 'setlike', 'setter', 'static',
+                                      'stringifier', 'typedef', 'unrestricted'])
     @classmethod
     def peek(cls, tokens):
         token = tokens.pushPosition()
@@ -1070,18 +1135,18 @@ class ArgumentName(Production):   # identifier | ArgumentNameKeyword
 
     def __init__(self, tokens):
         Production.__init__(self, tokens)
-        self._name = tokens.next().text
+        self._name = Identifier(tokens)
         self._didParse(tokens)
 
     @property
     def name(self):
-        return self._name[1:] if ('_' == self._name[0]) else self._name
+        return self._name.name
 
     def _unicode(self):
-        return self._name
+        return unicode(self._name)
 
     def _markup(self, generator):
-        generator.addName(self._name)
+        self._name.markup(generator)
         return self
 
     def __repr__(self):
@@ -1249,7 +1314,35 @@ class Special(Production):   # "getter" | "setter" | "creator" | "deleter" | "le
         return '[' + self.name.encode('ascii', 'replace') + ']'
 
 
-class AttributeRest(Production):   # ["readonly"] "attribute" TypeWithExtendedAttributes ("required" | identifier) [Ignore] ";"
+class AttributeName(Production):    # (Identifier | AttributeNameKeyword)
+    AttributeNameKeywords = frozenset(['async', 'required'])
+
+    @classmethod
+    def peek(cls, tokens):
+        token = tokens.pushPosition()
+        return tokens.popPosition(token and (token.isIdentifier() or (token.isSymbol() and (token.text in cls.AttributeNameKeywords))))
+
+    def __init__(self, tokens):
+        Production.__init__(self, tokens)
+        self._name = Identifier(tokens)
+        self._didParse(tokens)
+
+    @property
+    def name(self):
+        return self._name.name
+
+    def _unicode(self):
+        return unicode(self._name)
+
+    def _markup(self, generator):
+        self._name.markup(generator)
+        return self
+
+    def __repr__(self):
+        return '[OperationName: ' + repr(self._name) + ']'
+
+
+class AttributeRest(Production):   # ["readonly"] "attribute" TypeWithExtendedAttributes AttributeName [Ignore] ";"
     @classmethod
     def peek(cls, tokens):
         token = tokens.pushPosition()
@@ -1257,8 +1350,7 @@ class AttributeRest(Production):   # ["readonly"] "attribute" TypeWithExtendedAt
             token = tokens.peek()
         if (token and token.isSymbol('attribute')):
             if (TypeWithExtendedAttributes.peek(tokens)):
-                token = tokens.peek()
-                return tokens.popPosition(token and (token.isIdentifier() or token.isSymbol('required')))
+                return tokens.popPosition(AttributeName.peek(tokens))
         return tokens.popPosition(False)
 
     def __init__(self, tokens):
@@ -1266,15 +1358,19 @@ class AttributeRest(Production):   # ["readonly"] "attribute" TypeWithExtendedAt
         self.readonly = Symbol(tokens, 'readonly') if (Symbol.peek(tokens, 'readonly')) else None
         self._attribute = Symbol(tokens, 'attribute')
         self.type = TypeWithExtendedAttributes(tokens)
-        self.name = tokens.next().text
+        self._name = AttributeName(tokens)
         self._ignore = Ignore(tokens) if (Ignore.peek(tokens)) else None
         self._consumeSemicolon(tokens)
         self._didParse(tokens)
 
+    @property
+    def name(self):
+        return self._name.name
+
     def _unicode(self):
         output = unicode(self.readonly) if (self.readonly) else ''
         output += unicode(self._attribute) + unicode(self.type)
-        output += self.name
+        output += unicode(self._name)
         return output + (unicode(self._ignore) if (self._ignore) else '')
 
     def _markup(self, generator):
@@ -1282,7 +1378,7 @@ class AttributeRest(Production):   # ["readonly"] "attribute" TypeWithExtendedAt
             self.readonly.markup(generator)
         self._attribute.markup(generator)
         generator.addType(self.type)
-        generator.addName(self.name)
+        self._name.markup(generator)
         if (self._ignore):
             self._ignore.markup(generator)
         return self
@@ -1402,12 +1498,40 @@ class Attribute(ChildProduction):   # ["inherit"] AttributeRest
         return output + repr(self.attribute) + ']'
 
 
-class OperationRest(ChildProduction):   # [identifier] "(" [ArgumentList] ")" [Ignore] ";"
+class OperationName(Production):    # (Identifier | OperationNameKeyword)
+    OperationNameKeywords = frozenset(['includes'])
+
     @classmethod
     def peek(cls, tokens):
         token = tokens.pushPosition()
-        if (token and token.isIdentifier()):
-            token = tokens.peek()
+        return tokens.popPosition(token and (token.isIdentifier() or (token.isSymbol() and (token.text in cls.OperationNameKeywords))))
+
+    def __init__(self, tokens):
+        Production.__init__(self, tokens)
+        self._name = Identifier(tokens)
+        self._didParse(tokens)
+
+    @property
+    def name(self):
+        return self._name.name
+
+    def _unicode(self):
+        return unicode(self._name)
+
+    def _markup(self, generator):
+        self._name.markup(generator)
+        return self
+
+    def __repr__(self):
+        return '[OperationName: ' + repr(self._name) + ']'
+
+
+class OperationRest(ChildProduction):   # [OperationName] "(" [ArgumentList] ")" [Ignore] ";"
+    @classmethod
+    def peek(cls, tokens):
+        tokens.pushPosition(False)
+        OperationName.peek(tokens)
+        token = tokens.peek()
         if (token and token.isSymbol('(')):
             ArgumentList.peek(tokens)
             token = tokens.peek()
@@ -1416,7 +1540,7 @@ class OperationRest(ChildProduction):   # [identifier] "(" [ArgumentList] ")" [I
 
     def __init__(self, tokens, parent):
         ChildProduction.__init__(self, tokens, parent)
-        self.name = tokens.next().text if (tokens.sneakPeek().isIdentifier()) else None
+        self._name = OperationName(tokens) if (OperationName.peek(tokens)) else None
         self._openParen = Symbol(tokens, '(')
         self.arguments = ArgumentList(tokens, parent) if (ArgumentList.peek(tokens)) else None
         self._closeParen = Symbol(tokens, ')')
@@ -1429,16 +1553,21 @@ class OperationRest(ChildProduction):   # [identifier] "(" [ArgumentList] ")" [I
         return 'method'
 
     @property
+    def name(self):
+        return self._name.name if (self._name) else None
+
+    @property
     def argumentNames(self):
         return self.arguments.argumentNames if (self.arguments) else ['']
 
     def _unicode(self):
-        output = self.name if (self.name) else ''
+        output = unicode(self._name) if (self._name) else ''
         output += unicode(self._openParen) + (unicode(self.arguments) if (self.arguments) else '') + unicode(self._closeParen)
         return output + (unicode(self._ignore) if (self._ignore) else '')
 
     def _markup(self, generator):
-        generator.addName(self.name)
+        if (self._name):
+            self._name.markup(generator)
         generator.addText(self._openParen)
         if (self.arguments):
             self.arguments.markup(generator)
@@ -1449,7 +1578,7 @@ class OperationRest(ChildProduction):   # [identifier] "(" [ArgumentList] ")" [I
 
     def __repr__(self):
         output = '[OperationRest: '
-        output += ('[name: ' + self.name.encode('ascii', 'replace') + '] ') if (self.name) else ''
+        output += ('[name: ' + repr(self._name) + '] ') if (self._name) else ''
         return output + '[argumentlist: ' + (repr(self.arguments) if (self.arguments) else '') + ']]'
 
 
@@ -1894,13 +2023,12 @@ class Stringifier(ChildProduction): # "stringifier" AttributeRest | "stringifier
         return output + ']'
 
 
-class Identifiers(Production):  # "," identifier ["," identifier]...
+class Identifiers(Production):  # "," Identifier ["," Identifier]...
     @classmethod
     def peek(cls, tokens):
         tokens.pushPosition(False)
         if (Symbol.peek(tokens, ',')):
-            token = tokens.peek()
-            if (token and token.isIdentifier()):
+            if (Identifier.peek(tokens)):
                 Identifiers.peek(tokens)
                 return tokens.popPosition(True)
         return tokens.popPosition(False)
@@ -1908,16 +2036,49 @@ class Identifiers(Production):  # "," identifier ["," identifier]...
     def __init__(self, tokens):
         Production.__init__(self, tokens)
         self._comma = Symbol(tokens, ',')
-        self.name = tokens.next().text
+        self._name = Identifier(tokens)
         self.next = Identifiers(tokens) if (Identifiers.peek(tokens)) else None
         self._didParse(tokens)
 
+    @property
+    def name(self):
+        return self._name.name
+
     def _unicode(self):
-        output = unicode(self._comma) + self.name
+        output = unicode(self._comma) + unicode(self._name)
         return output + (unicode(self.next) if (self.next) else '')
 
     def __repr__(self):
-        return ' ' + self.name.encode('ascii', 'replace') + (repr(self.next) if (self.next) else '')
+        return ' ' + repr(self._name) + (repr(self.next) if (self.next) else '')
+
+
+class TypeIdentifiers(Production):  # "," Identifier ["," Identifier]...
+    @classmethod
+    def peek(cls, tokens):
+        tokens.pushPosition(False)
+        if (Symbol.peek(tokens, ',')):
+            if (TypeIdentifier.peek(tokens)):
+                TypeIdentifiers.peek(tokens)
+                return tokens.popPosition(True)
+        return tokens.popPosition(False)
+
+    def __init__(self, tokens):
+        Production.__init__(self, tokens)
+        self._comma = Symbol(tokens, ',')
+        self._name = TypeIdentifier(tokens)
+        self.next = TypeIdentifiers(tokens) if (TypeIdentifiers.peek(tokens)) else None
+        self._didParse(tokens)
+
+    @property
+    def name(self):
+        return self._name.name
+
+    def _unicode(self):
+        output = unicode(self._comma) + unicode(self._name)
+        return output + (unicode(self.next) if (self.next) else '')
+
+    def __repr__(self):
+        return ' ' + repr(self._name) + (repr(self.next) if (self.next) else '')
 
 
 class StaticMember(ChildProduction):    # "static" AttributeRest | "static" ReturnType OperationRest
@@ -1995,6 +2156,73 @@ class StaticMember(ChildProduction):    # "static" AttributeRest | "static" Retu
         if (self.operation):
             return output + repr(self.returnType) + ' ' + repr(self.operation) + ']'
         return output + repr(self.attribute) + ']'
+
+
+class Constructor(ChildProduction):    # "constructor" "(" ArgumentList ")" ";"
+    @classmethod
+    def peek(cls, tokens):
+        tokens.pushPosition(False)
+        if (Symbol.peek(tokens, 'constructor')):
+            if (Symbol.peek(tokens, '(')):
+                ArgumentList.peek(tokens)
+                token = tokens.peek()
+                return tokens.popPosition(token and token.isSymbol(')'))
+        return tokens.popPosition(False)
+
+    def __init__(self, tokens, parent):
+        ChildProduction.__init__(self, tokens, parent)
+        self._constructor = Symbol(tokens, 'constructor')
+        self._openParen = Symbol(tokens, '(')
+        self.arguments = ArgumentList(tokens, parent) if (ArgumentList.peek(tokens)) else None
+        self._closeParen = Symbol(tokens, ')')
+        self._consumeSemicolon(tokens)
+        self._didParse(tokens)
+
+    @property
+    def idlType(self):
+        return 'method'
+
+    @property
+    def name(self):
+        return unicode(self._constructor)
+
+    @property
+    def stringifier(self):
+        return False
+
+    @property
+    def argumentNames(self):
+        return self.arguments.argumentNames if (self.arguments) else ['']
+
+    @property
+    def methodName(self):
+        name = 'constructor('
+        if (self.arguments):
+            name += self.arguments.argumentNames[0]
+        return name + ')'
+
+    @property
+    def methodNames(self):
+        if (self.arguments):
+            return ['constructor(' + argumentName + ')' for argumentName in self.arguments.argumentNames]
+        return [self.methodName]
+
+    def _unicode(self):
+        output = self.name if (self.name) else ''
+        return output + unicode(self._openParen) + (unicode(self.arguments) if (self.arguments) else '') + unicode(self._closeParen)
+
+    def _markup(self, generator):
+        if (self._constructor):
+            self._constructor.markup(generator)
+        generator.addText(self._openParen)
+        if (self.arguments):
+            self.arguments.markup(generator)
+        generator.addText(self._closeParen)
+        return self
+
+    def __repr__(self):
+        output = '[Constructor: '
+        return output + '[argumentlist: ' + (repr(self.arguments) if (self.arguments) else '') + ']]'
 
 
 class ExtendedAttributeList(ChildProduction):   # "[" ExtendedAttribute ["," ExtendedAttribute]... "]"
