@@ -25,8 +25,8 @@ class myHandler(BaseHTTPRequestHandler):
 
 		try:
 			html,css = highlight(data, lang=lang, output="html", unescape=True)
-		except:
-			do_400(self)
+		except Exception as err:
+			do_400(self, err)
 			return
 		self.send_response(200)
 		self.send_header('Content-type',"text/plain")
@@ -41,11 +41,14 @@ def do_404(handler):
 	handler.end_headers()
 	handler.wfile.write("Invalid request, must send JSON as the path.")
 
-def do_400(handler):
+def do_400(handler, err):
 	handler.send_response(400)
 	handler.send_header('Content-type','text/plain')
 	handler.end_headers()
-	handler.wfile.write("Unexpected error:\n{0}".format(sys.exc_info()[0]))
+	if isinstance(err, SyntaxWarning):
+		handler.wfile.write(str(err))
+	else:
+		handler.wfile.write("Unexpected error:\n{0}".format(sys.exc_info()[0]))
 
 try:
 	#Create a web server and define the handler to manage the

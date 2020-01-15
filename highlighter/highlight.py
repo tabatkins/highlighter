@@ -94,6 +94,7 @@ def highlightWithWebIDL(text):
     class IDLUI(object):
         def warn(self, msg):
             warn("{0}", msg.rstrip())
+            raise SyntaxWarning("Invalid Web IDL found.")
     class HighlightMarker(object):
         # Just applies highlighting classes to IDL stuff.
         def markupTypeName(self, text, construct):
