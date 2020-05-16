@@ -13,11 +13,10 @@ def children(node, clear=False):
 def textContent(el):
     def textIterator(el):
         for item in children(el):
-            if isinstance(item, basestring):
+            if isinstance(item, str):
                 yield item
             else:
-                for ret in textIterator(item):
-                    yield ret
+                yield from textIterator(item)
     return "".join(textIterator(el))
 
 def mapTextNodes(node, fn):

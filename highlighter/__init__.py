@@ -1,3 +1,3 @@
 __all__ = ['highlight', 'lexers', 'styles']
 
-from highlight import highlight
+from .highlight import highlight

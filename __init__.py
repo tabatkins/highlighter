@@ -1,6 +1,5 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.7
 # -*- coding: utf-8 -*-
-from __future__ import division, unicode_literals
 
 # Pull all the highlighter imports up,
 # so this folder can be used directly as a module
@@ -35,13 +34,13 @@ def cli():
 	html,css = highlight(input, **options)
 	if options['just'] == "html":
 		if options['output'] == "html":
-			print html.encode('utf-8')
+			print(html.encode('utf-8'))
 		else:
-			print json.dumps(html).encode('utf-8')
+			print(json.dumps(html).encode('utf-8'))
 	elif options['just'] == "css":
-		print css.encode('utf-8')
+		print(css.encode('utf-8'))
 	else:
-		print json.dumps({"html":html, "css":css}).encode('utf-8')
+		print(json.dumps({"html":html, "css":css}).encode('utf-8'))
 
 if __name__ == '__main__':
 	cli()

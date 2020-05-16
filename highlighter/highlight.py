@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import division, unicode_literals
 import collections
 import itertools
 import re
@@ -22,7 +21,9 @@ def die(msg, *rargs, **kwargs):
 def warn(msg, *rargs, **kwargs):
     raise SyntaxWarning(msg.format(*rargs, **kwargs))
 
-def highlight(html, lang, lineNumbers=False, lineStart=1, lineHighlights=set(), output="json", unescape=False, **unusedKwargs):
+def highlight(html, lang, lineNumbers=False, lineStart=1, lineHighlights=None, output="json", unescape=False, **unusedKwargs):
+    if lineHighlights is None:
+        lineHighlights=set()
     if unescape:
         html = mapTextNodes(html, unescapeHtml)
     html = highlightEl(html, lang)
@@ -81,7 +82,7 @@ def highlightEl(el, lang):
 
 
 def highlightWithWebIDL(text):
-    from .widlparser.widlparser import parser
+    from widlparser import parser
     '''
     Trick the widlparser emitter,
     which wants to output HTML via wrapping with start/end tags,
@@ -110,7 +111,9 @@ def highlightWithWebIDL(text):
         return
 
     widl = parser.Parser(text, IDLUI())
-    return coloredTextFromWidlStack(unicode(widl.markup(HighlightMarker())))
+    widlStack = str(widl.markup(HighlightMarker()))
+    print(widlStack)
+    return coloredTextFromWidlStack(widlStack)
 
 def coloredTextFromWidlStack(widlText):
     coloredTexts = collections.deque()
@@ -159,13 +162,13 @@ def coloredTextFromWidlStack(widlText):
 
 
 def highlightWithPygments(text, lang):
-    from .pygments import pygments
-    from .pygments.pygments import formatters
+    import pygments
+    from pygments import formatters
     lexer = lexerFromLang(lang)
     if lexer is None:
         die("'{0}' isn't a known syntax-highlighting language. See http://pygments.org/docs/lexers/.", lang)
         return
-    rawTokens = pygments.highlight(text, lexer, formatters.RawTokenFormatter())
+    rawTokens = str(pygments.highlight(text, lexer, formatters.RawTokenFormatter()), encoding="utf-8")
     coloredText = coloredTextFromRawTokens(rawTokens)
     return coloredText
 
@@ -309,17 +312,17 @@ def coloredTextFromRawTokens(text):
             continue
         tokenName,_,tokenTextRepr = line.partition("\t")
         color = colorFromName.get(tokenName, None)
-        text = eval(tokenTextRepr)
-        if not text:
+        t = eval(tokenTextRepr)
+        if not t:
             continue
         if not currentCT:
-            currentCT = ColoredText(text, color)
+            currentCT = ColoredText(t, color)
         elif currentCT.color == color:
             # Repeated color, merge into current
-            currentCT = currentCT._replace(text=currentCT.text + text)
+            currentCT = currentCT._replace(text=currentCT.text + t)
         else:
             addCtToList(textList, currentCT)
-            currentCT = ColoredText(text, color)
+            currentCT = ColoredText(t, color)
     if currentCT:
         addCtToList(textList, currentCT)
     return textList
@@ -340,7 +343,7 @@ def lexerFromLang(lang):
     if lang in customLexers:
         return customLexers[lang]()
     try:
-        from .pygments.pygments.lexers import get_lexer_by_name
+        from pygments.lexers import get_lexer_by_name
         return get_lexer_by_name(lang, encoding="utf-8", stripAll=True)
     except:
         return None
@@ -376,7 +379,7 @@ def addLineWrappers(el, numbers=True, start=1, highlights=None):
     lineNumber = start
     for lineNo, node in grouper(children(el), 2):
         if numbers or lineNumber in highlights:
-            attrs(lineNo)["data-line"] = unicode(lineNumber)
+            attrs(lineNo)["data-line"] = str(lineNumber)
         if lineNumber in highlights:
             addClass(node, "highlight-line")
             addClass(lineNo, "highlight-line")
@@ -386,10 +389,10 @@ def addLineWrappers(el, numbers=True, start=1, highlights=None):
                 if (lineNumber + i) in highlights:
                     addClass(lineNo, "highlight-line")
                     addClass(node, "highlight-line")
-                    attrs(lineNo)["data-line"] = unicode(lineNumber)
+                    attrs(lineNo)["data-line"] = str(lineNumber)
             lineNumber += internalNewlines
             if numbers:
-                attrs(lineNo)["data-line-end"] = unicode(lineNumber)
+                attrs(lineNo)["data-line-end"] = str(lineNumber)
         lineNumber += 1
     addClass(el, "line-numbered")
     return el
