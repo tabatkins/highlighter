@@ -112,7 +112,6 @@ def highlightWithWebIDL(text):
 
     widl = parser.Parser(text, IDLUI())
     widlStack = str(widl.markup(HighlightMarker()))
-    print(widlStack)
     return coloredTextFromWidlStack(widlStack)
 
 def coloredTextFromWidlStack(widlText):
