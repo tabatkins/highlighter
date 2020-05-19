@@ -30,7 +30,7 @@ def mapTextNodes(node, fn):
 
 def copyNode(node):
     if isElement(node):
-        return [node[0], node[1].copy()] + map(copyNode, node[2:])
+        return [node[0], node[1].copy()] + list(map(copyNode, node[2:]))
     else:
         return node
 
