@@ -1,9 +1,9 @@
-#!/usr/bin/python
-from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
+#!/usr/bin/env python3.7
+from http.server import BaseHTTPRequestHandler,HTTPServer
 import json
 import os
 import sys
-import urllib2
+import urllib.parse
 import argparse
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
@@ -16,7 +16,7 @@ PORT_NUMBER = 8080
 class myHandler(BaseHTTPRequestHandler):
 	#Handler for the GET requests
 	def do_GET(self):
-		input = urllib2.unquote(self.path[1:])
+		input = urllib.parse.unquote(self.path[1:])
 		lang,_,data = input.partition("?")
 		if not data.startswith("["):
 			do_404(self)
@@ -59,12 +59,12 @@ try:
 	options = vars(ap.parse_args())
 	server = HTTPServer(('', PORT_NUMBER), myHandler)
 	if not options['quiet']:
-		print 'Started httpserver on port ' , PORT_NUMBER
+		print('Started httpserver on port ' , PORT_NUMBER)
 
 	#Wait forever for incoming http requests
 	server.serve_forever()
 
 except KeyboardInterrupt:
 	if not options['quiet']:
-		print '^C received, shutting down the web server'
+		print('^C received, shutting down the web server')
 	server.socket.close()
