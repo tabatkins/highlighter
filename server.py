@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python3
 from http.server import BaseHTTPRequestHandler,HTTPServer
 import json
 import os
