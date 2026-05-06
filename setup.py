@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as fh:
+with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
-with open("semver.txt", "r") as fh:
+with open("semver.txt", "r", encoding="utf-8") as fh:
     semver = fh.read().strip()
-with open("requirements.txt", "r") as fh:
-    install_requires = [x.strip() for x in fh.read().strip().split("\n")]
+with open("requirements.txt", "r", encoding="utf-8") as fh:
+    install_requires = [x.strip() for x in fh.read().strip().split("\n") if len(x) and x[0].isalpha()]
 
 setup(
     name='bs-highlighter',
