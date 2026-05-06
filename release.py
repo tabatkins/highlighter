@@ -16,12 +16,12 @@ def createRelease(projectName):
         print("Working tree is dirty. Finish committing files or stash, then try again.")
         sys.exit(1)
 
-    with open("semver.txt", 'r') as fh:
+    with open("semver.txt", 'r', encoding="utf-8") as fh:
         currentVersion = fh.read().strip()
         semver = parseSemver(currentVersion)
 
     try:
-        with open("secrets.json", 'r') as fh:
+        with open("secrets.json", 'r', encoding="utf-8") as fh:
             secrets = json.load(fh)
     except IOError:
         print("Error trying to load the secrets.json file.")
@@ -48,13 +48,13 @@ def createRelease(projectName):
     print(f"Bumping to {newVersion}...")
 
     # Update the semver
-    with open("semver.txt", 'w') as fh:
+    with open("semver.txt", 'w', encoding="utf-8") as fh:
         fh.write(newVersion)
 
     try:
         # Clear out the build artifacts, build it, upload, and clean up again.
         subprocess.call("rm -r build dist", shell=True)
-        subprocess.check_call("python setup.py sdist bdist_wheel", shell=True)
+        subprocess.check_call("python setup.py sdist", shell=True)
         if options.test:
             subprocess.check_call(' '.join([
                 "twine upload",
@@ -73,7 +73,7 @@ def createRelease(projectName):
         subprocess.call("rm -r build dist", shell=True)
     except:
         # roll back the semver
-        with open("semver.txt", 'w') as fh:
+        with open("semver.txt", 'w', encoding="utf-8") as fh:
             fh.write(currentVersion)
         raise
 
