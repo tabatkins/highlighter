@@ -1,2 +1,3 @@
-pygments==2.14.0
-widlparser==1.1.2
+-i https://pypi.org/simple
+pygments==2.20.0
+widlparser==1.5.0
