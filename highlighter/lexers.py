@@ -1,21 +1,24 @@
 # -*- coding: utf-8 -*-
 import re
-from pygments.lexer import RegexLexer, include, bygroups
-from pygments.token import *
+import typing
+
+from pygments.lexer import RegexLexer, bygroups, include
+from pygments.token import Comment, Keyword, Literal, Name, Punctuation, Text
+
 
 class CSSLexer(RegexLexer):
     name = "CSS"
-    aliases = ['css']
-    filenames = ['*.css']
+    aliases: typing.ClassVar = ["css"]
+    filenames: typing.ClassVar = ["*.css"]
     flags = re.DOTALL
 
-    tokens = {
+    tokens: typing.ClassVar = {
         "root": [
             (r"", Text, "rules"),
         ],
         "comment": [
             (r"\*/", Comment, "#pop"),
-            (r".", Comment)
+            (r".", Comment),
         ],
         "at-rule": [
             include("values"),
@@ -23,7 +26,7 @@ class CSSLexer(RegexLexer):
             (r"{\s*}", Punctuation, "#pop"),
             (r"{(?=[^;}]*{)", Punctuation, ("#pop", "rules")),
             (r"{(?=[^{}]*;)", Punctuation, ("#pop", "decls")),
-            (r"", Text, "#pop")
+            (r"", Text, "#pop"),
         ],
         "rules": [
             (r"/\*", Comment, "comment"),
@@ -38,12 +41,15 @@ class CSSLexer(RegexLexer):
             (r"([\w-]+)\s*(:)", bygroups(Keyword, Punctuation)),
             include("values"),
             (r"}", Punctuation, "#pop"),
-            (r".+", Text)
+            (r".+", Text),
         ],
         "values": [
             (r"/\*", Comment, "comment"),
             (r"[(),/]", Punctuation),
-            (r"([+-]?(?:\d+(?:\.\d+)?|\d*\.\d+)[eE][+-]?(?:\d+(?:\.\d+)?|\d*\.\d+))([a-zA-Z-]+|%)", bygroups(Literal.Number, Literal)),
+            (
+                r"([+-]?(?:\d+(?:\.\d+)?|\d*\.\d+)[eE][+-]?(?:\d+(?:\.\d+)?|\d*\.\d+))([a-zA-Z-]+|%)",
+                bygroups(Literal.Number, Literal),
+            ),
             (r"[+-]?(?:\d+(?:\.\d+)?|\d*\.\d+)[eE][+-]?(?:\d+(?:\.\d+)?|\d*\.\d+)", Literal.Number),
             (r"([+-]?(?:\d+(?:\.\d+)?|\d*\.\d+))([a-zA-Z-]+|%)", bygroups(Literal.Number, Literal)),
             (r"[+-]?(?:\d+(?:\.\d+)?|\d*\.\d+)", Literal.Number),
@@ -52,6 +58,6 @@ class CSSLexer(RegexLexer):
             (r"\"[^\"]*\"", Literal.String),
             (r"'[^']*'", Literal.String),
             (r"#?[\w-]+", Text),
-            (r"\s+", Text)
-        ]
+            (r"\s+", Text),
+        ],
     }

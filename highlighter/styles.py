@@ -1,7 +1,7 @@
 # To regen the styles, edit and run the below
-#from pygments import token
-#from pygments import style
-#class PrismStyle(style.Style):
+# from pygments import token
+# from pygments import style
+# class PrismStyle(style.Style):
 #    default_style = "#000000"
 #    styles = {
 #        token.Name: "#007299",
@@ -17,11 +17,11 @@
 #        token.Literal.String: "#aa5d00",
 #        token.Comment: "#696969"
 #    }
-#print formatters.HtmlFormatter(style=PrismStyle).get_style_defs('.highlight')
+# print formatters.HtmlFormatter(style=PrismStyle).get_style_defs('.highlight')
 
 # Following classes were renamed to single-character names,
 # as they're common and this'll save us a single character of output.
-'''
+"""
 na
 nt
 nv
@@ -30,9 +30,9 @@ kt
 s1
 s2
 cm
-'''
+"""
 
-highlight = '''
+highlight = """
 .highlight:not(.idl) { background: hsl(24, 20%, 95%); }
 code.highlight { padding: .1em; border-radius: .3em; }
 pre.highlight, pre > code.highlight { display: block; padding: 1em; margin: .5em 0; overflow: auto; border-radius: 0; }
@@ -88,9 +88,9 @@ c-[vc] { color: #007299 } /* Name.Variable.Class */
 c-[vg] { color: #007299 } /* Name.Variable.Global */
 c-[vi] { color: #007299 } /* Name.Variable.Instance */
 c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
-'''
+"""
 
-lineNumber = '''
+lineNumber = """
 .line-numbered {
     display: grid !important;
     grid-template-columns: min-content 1fr;
@@ -119,9 +119,9 @@ lineNumber = '''
     padding: 0 .5em 0 .1em;
     content: attr(data-line-end);
 }
-'''
+"""
 
-lineHighlight = '''
+lineHighlight = """
 .line-numbered {
     display: grid !important;
     grid-template-columns: min-content 1fr;
@@ -155,4 +155,4 @@ lineHighlight = '''
     padding: 0 .5em 0 .1em;
     content: attr(data-line-end);
 }
-'''
+"""

@@ -8,10 +8,10 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
     install_requires = [x.strip() for x in fh.read().strip().split("\n") if len(x) and x[0].isalpha()]
 
 setup(
-    name='bs-highlighter',
+    name="bs-highlighter",
     version=semver,
-    author='Tab Atkins-Bittner',
-    description='A command-line highlighter syntax-highlighter, using Pygments and widlparser.',
+    author="Tab Atkins-Bittner",
+    description="A command-line highlighter syntax-highlighter, using Pygments and widlparser.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/tabatkins/highlighter",
@@ -19,5 +19,5 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     python_requires=">=3.7",
-    entry_points={'console_scripts': ['highlight = highlighter:cli']},
+    entry_points={"console_scripts": ["highlight = highlighter:cli"]},
 )

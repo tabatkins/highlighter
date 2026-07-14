@@ -1,0 +1,3 @@
+#! /bin/sh
+
+echo "¶ Running ruff..." && ruff check --fix highlighter && echo "¶ Running black..." && black . && echo "¶ Running ruff again (just in case)..." && ruff check --fix highlighter && echo "¶ Running mypy..." && mypy && echo "¶ Running pylint..." && pylint highlighter && echo "✔ All lints passed!"
