@@ -42,7 +42,7 @@ def cli() -> None:
         "--unescape",
         dest="unescape",
         action="store_true",
-        help="Does a quick unescape pass over the input HTML, reverting one level of HTML escapes for &<>'\". Use if your DOM implementation doesn't convert escapes to text. Won't unescape any other HTML escapes, so beware!",
+        help="Does a quick unescape pass over the input HTML, reverting one level of HTML escapes for &<>'\", and decimal/hex escapes. Use if your DOM implementation doesn't convert escapes to text. Won't unescape any other HTML escapes, so beware!",
     )
     ap.add_argument(
         "--just",
