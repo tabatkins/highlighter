@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from . import t
 
 
@@ -9,17 +11,6 @@ def isElement(node: t.Node) -> t.TypeIs[t.Element]:
 
 def isNode(node: t.Any) -> t.TypeIs[t.Node]:
     return isinstance(node, (list, str))
-
-
-def hasChildElements(node: t.Node) -> bool:
-    return any(isElement(x) for x in node[2:])
-
-
-def children(node: t.Node) -> list[t.Node]:
-    if isElement(node):
-        return t.cast("list[t.Node]", node[2:])
-    else:
-        return []
 
 
 def textContent(el: t.Element) -> str:
@@ -33,60 +24,24 @@ def textContent(el: t.Element) -> str:
     return "".join(textIterator(el))
 
 
-def mapTextNodes(el: t.Element, fn: t.Callable[[str], t.Node]) -> t.Element:
-    ret = t.cast("list[t.Any]", copyNode(clearChildren(el)))
-    for child in children(el):
-        if isElement(child):
-            ret.append(mapTextNodes(child, fn))
-        else:
-            ret.append(fn(child))
-    return t.cast("t.Element", ret)
+def tagName(el: t.Element) -> str:
+    return el[0]
 
 
-@t.overload
-def copyNode(node: t.Element) -> t.Element: ...
-@t.overload
-def copyNode(node: str) -> str: ...
-@t.overload
-def copyNode(node: t.Node) -> t.Node: ...
-def copyNode(node: t.Node) -> t.Node:
-    if isElement(node):
-        if len(node) == 1:
-            return t.cast("t.Element", [node[0], {}])
-        return t.cast("t.Element", [node[0], node[1].copy()] + list(map(copyNode, children(node))))
-    else:
-        return node
+def attrs(el: t.Element) -> dict[str, str]:
+    if len(el) == 1:
+        a: dict[str, str] = {}
+        t.cast("list[t.Any]", el).append(a)
+        return a
+    return el[1]
 
 
-@t.overload
-def clearChildren(node: t.Element) -> t.Element: ...
-@t.overload
-def clearChildren(node: str) -> str: ...
-@t.overload
-def clearChildren(node: t.Node) -> t.Node: ...
-def clearChildren(node: t.Node) -> t.Node:
-    if isElement(node):
-        return node[:2]
-    else:
-        return node
+def children(el: t.Element) -> list[t.Node]:
+    return t.cast("list[t.Node]", el[2:])
 
 
-def tagName(node: t.Node) -> str | None:
-    if isElement(node):
-        return node[0]
-    else:
-        return None
-
-
-def attrs(node: t.Node) -> dict[str, str]:
-    if isElement(node):
-        if len(node) == 1:
-            a: dict[str, str] = {}
-            t.cast("list[t.Any]", node).append(a)
-            return a
-        return node[1]
-    else:
-        return {}
+def withoutChildren(el: t.Element) -> t.Element:
+    return t.cast("t.Element", el[0:2])
 
 
 def addClass(node: t.Element, cls: str) -> t.Element:
@@ -98,13 +53,24 @@ def addClass(node: t.Element, cls: str) -> t.Element:
     return node
 
 
-def appendChild(node: t.Element, *childNodes: t.Node) -> t.Element:
-    t.cast("list[t.Any]", node).extend(childNodes)
-    return node
+def appendChild(el: t.Element, *childNodes: t.Node) -> t.Element:
+    t.cast("list[t.Any]", el).extend(childNodes)
+    return el
 
 
-def isEmpty(node: t.Element) -> bool:
-    return len(node) <= 2
+def setChild(el: t.Element, index: int, childNode: t.Node) -> t.Element:
+    if index + 2 >= len(el):
+        raise IndexError
+    t.cast("list[t.Any]", el)[index + 2] = childNode
+    return el
+
+
+def isEmpty(el: t.Element) -> bool:
+    return len(el) <= 2
+
+
+def hasChildElements(node: t.Node) -> bool:
+    return any(isElement(x) for x in node[2:])
 
 
 def escapeHtml(s: str) -> str:
@@ -113,10 +79,23 @@ def escapeHtml(s: str) -> str:
     )
 
 
+def unescapeElement(el: t.Element) -> t.Element:
+    for key, val in attrs(el).items():
+        el[1][key] = unescapeHtml(val)
+    for i, child in enumerate(children(el)):
+        if isElement(child):
+            setChild(el, i, unescapeElement(child))
+        else:
+            setChild(el, i, unescapeHtml(child))
+    return el
+
+
 def unescapeHtml(s: str) -> str:
-    return (
-        s.replace("&gt;", ">").replace("&lt;", "<").replace("&quot;", '"').replace("&apos;", "'").replace("&amp;", "&")
-    )
+    ret = s.replace("&gt;", ">").replace("&lt;", "<").replace("&quot;", '"').replace("&apos;", "'")
+    ret = re.sub(r"&#(\d+);?", lambda match: chr(int(match[1])), ret)
+    ret = re.sub(r"&#x([\da-fA-F]+);?", lambda match: chr(int(match[1], 16)), ret)
+    ret = ret.replace("&amp;", "&")
+    return ret
 
 
 if t.TYPE_CHECKING:

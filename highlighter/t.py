@@ -37,5 +37,5 @@ if TYPE_CHECKING:
 
     from typing_extensions import TypeIs
 
-    type Element = tuple[str] | tuple[str, dict[str, str], *tuple[Node, ...]]
+    type Element = tuple[str, dict[str, str], *tuple[Node, ...]]
     type Node = Element | str

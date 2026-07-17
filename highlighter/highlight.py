@@ -38,14 +38,15 @@ def highlight(
     lang: str,
     lineNumbers: bool = False,
     lineStart: int = 1,
-    lineHighlights: set[int] | None = None,
+    lineHighlights: str | set[int] | None = None,
     output: str = "json",
     unescape: bool = False,
 ) -> tuple[t.Element, str] | tuple[str, str]:
     if lineHighlights is None:
         lineHighlights = set()
+    assert dom.isElement(html)
     if unescape:
-        html = dom.mapTextNodes(html, dom.unescapeHtml)
+        html = dom.unescapeElement(html)
     html = highlightEl(html, lang)
     css = styles.highlight
 
@@ -53,7 +54,7 @@ def highlight(
     if lineNumbers or lineHighlights:
         if lineNumbers:
             css += styles.lineNumber
-        if lineHighlights:
+        if lineHighlights is not None:
             if isinstance(lineHighlights, str):
                 lineHighlights = parseHighlightString(lineHighlights)
             css += styles.lineHighlight
@@ -228,11 +229,9 @@ def mergeHighlighting(el: t.Element, coloredText: t.Deque[ColoredText]) -> t.Ele
 
     def colorizeEl(el: t.Element, coloredText: t.Deque[ColoredText]) -> t.Element:
         elChildren = dom.children(el)
-        el = dom.clearChildren(el)
-        assert dom.isElement(el)
+        el = dom.withoutChildren(el)
         for node in elChildren:
             if dom.isElement(node):
-                t.assert_type(node, t.Element)
                 dom.appendChild(el, colorizeEl(node, coloredText))
             else:
                 dom.appendChild(el, *colorizeText(node, coloredText))
@@ -427,7 +426,7 @@ def addLineWrappers(
         highlights = set()
     lineWrapper = dom.E.span({"class": "line"})
     elChildren = dom.children(el)
-    el = dom.clearChildren(el)
+    el = dom.withoutChildren(el)
     for node in elChildren:
         if dom.isElement(node):
             dom.appendChild(lineWrapper, node)
