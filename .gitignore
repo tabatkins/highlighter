@@ -1,4 +1,5 @@
 secrets.json
+.python-version
 *.egg-info
 .idea
 *.iml
