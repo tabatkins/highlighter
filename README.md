@@ -196,3 +196,47 @@ remember to correctly escape attribute values and text nodes.
 > to preserve the linebreaks in your source.
 > The highlighted output will still, generally, rely on your linebreaks.
 
+# Output HTML
+
+The output HTML structure retains all the markup you passed in
+(or returns a `<pre>` wrapper element containing your text, if you passed a string),
+and additionally adds the following markup:
+
+* `<c->...</c->` custom elements to indicate colored text,
+	with a one- or two-letter attribute indicating what category it's highlighted as.
+	See [`styles.py`](https://github.com/tabatkins/highlighter/blob/main/highlighter/styles.py)
+	(or the generated CSS)
+	for the attributes and what each stands for.
+	If there was existing markup in the input (links, etc),
+	the `c-` elements are nested "tightly", directly around the text,
+	and won't have any element children themselves,
+	to avoid disrupting your markup structure.
+
+	(These are valid HTML custom elements, as short as it is possible to generate,
+	as highlighting can add significant amounts of markup.)
+* If you are using line numbers and/or highlights,
+	the root element has a `.line-numbered` class added to it.
+	The root element's children are an alternating list of
+	`<span class=line-no></span>`  elements
+	(empty, but with a `data-line` attribute containing the line number
+	if it should be displayed;
+	inserted into the output via a CSS `::before` so it's not included in copy/paste)
+	and `<span class=line>...</span>` elements containing the contents of that line.
+	The default CSS lays these out using CSS Grid.
+	If using line highlights, 
+	the highlighted lines additionally have `.line-highlight` classes
+	on both `.line-no` and `.line`.
+
+	If there was existing markup in the input,
+	and an element crosses two or more lines of the source,
+	it will be preserved as-is,
+	and the `.line` span will wrap around as many lines as needed to contain it
+	(so `.line` only breaks on a top-level newline character, directly under the root element).
+	The `.line-no` element preceding that `.line` 
+	will additionally have a `data-line-end` attribute,
+	so it can display the start and end of the span
+	(so, if it's only two lines, you won't notice anything;
+	if it's 3 or more, the "interior" lines won't receive numbers).
+
+The returned CSS has all the styling you should need for all of these markup structures,
+but you can of course use whatever styling you wish.
