@@ -13,6 +13,28 @@ def isNode(node: t.Any) -> t.TypeIs[t.Node]:
     return isinstance(node, (list, str))
 
 
+def normalizeElement(el: t.Element) -> None:
+    # Ensures that the markup structure *is* json-in-html,
+    # notably that each element has at least two items.
+    if not isinstance(el, list):
+        msg = f"Found a non-element item: {el!r}"
+        raise TypeError(msg)
+    if len(el) == 1:
+        el.append({})
+    if not isinstance(el[0], str):
+        msg = f"Found an element with a non-string tagname: {el!r}"
+        raise TypeError(msg)
+    if not isinstance(el[1], dict):
+        msg = f"Found an element with a non-dict attrs: {el!r}"
+        raise TypeError(msg)
+    if len(el) > 2:
+        for child in el[2:]:
+            if isinstance(child, str):
+                pass
+            else:
+                normalizeElement(t.cast("t.Element", child))
+
+
 def textContent(el: t.Element) -> str:
     def textIterator(el: t.Element) -> t.Iterator[str]:
         for item in children(el):
@@ -25,15 +47,11 @@ def textContent(el: t.Element) -> str:
 
 
 def tagName(el: t.Element) -> str:
-    return el[0]
+    return t.cast("str", el[0])
 
 
 def attrs(el: t.Element) -> dict[str, str]:
-    if len(el) == 1:
-        a: dict[str, str] = {}
-        t.cast("list[t.Any]", el).append(a)
-        return a
-    return el[1]
+    return t.cast("dict[str, str]", el[1])
 
 
 def children(el: t.Element) -> list[t.Node]:
@@ -41,7 +59,7 @@ def children(el: t.Element) -> list[t.Node]:
 
 
 def withoutChildren(el: t.Element) -> t.Element:
-    return t.cast("t.Element", el[0:2])
+    return el[0:2]
 
 
 def addClass(node: t.Element, cls: str) -> t.Element:
@@ -54,14 +72,14 @@ def addClass(node: t.Element, cls: str) -> t.Element:
 
 
 def appendChild(el: t.Element, *childNodes: t.Node) -> t.Element:
-    t.cast("list[t.Any]", el).extend(childNodes)
+    el.extend(childNodes)
     return el
 
 
 def setChild(el: t.Element, index: int, childNode: t.Node) -> t.Element:
     if index + 2 >= len(el):
         raise IndexError
-    t.cast("list[t.Any]", el)[index + 2] = childNode
+    el[index + 2] = childNode
     return el
 
 
@@ -69,8 +87,8 @@ def isEmpty(el: t.Element) -> bool:
     return len(el) <= 2
 
 
-def hasChildElements(node: t.Node) -> bool:
-    return any(isElement(x) for x in node[2:])
+def hasChildElements(el: t.Element) -> bool:
+    return any(isElement(x) for x in children(el))
 
 
 def escapeHtml(s: str) -> str:
@@ -80,8 +98,9 @@ def escapeHtml(s: str) -> str:
 
 
 def unescapeElement(el: t.Element) -> t.Element:
-    for key, val in attrs(el).items():
-        el[1][key] = unescapeHtml(val)
+    att = attrs(el)
+    for key, val in att.items():
+        att[key] = unescapeHtml(val)
     for i, child in enumerate(children(el)):
         if isElement(child):
             setChild(el, i, unescapeElement(child))
@@ -103,13 +122,13 @@ if t.TYPE_CHECKING:
     class ElementCreatorFnT(t.Protocol):
         def __call__(
             self,
-            attrsOrChild: t.Mapping[str, str | None] | t.Node,
+            attrsOrChild: dict[str, str] | t.Node,
             *childNodes: t.Node,
         ) -> t.Element: ...
 
 
 def createElement(tag: str, attr: dict[str, str], *childNodes: t.Node) -> t.Element:
-    return t.cast("t.Element", [tag, attr, *childNodes])
+    return [tag, attr, *childNodes]
 
 
 class ElementCreationHelper:
@@ -117,13 +136,12 @@ class ElementCreationHelper:
         name = name.replace("_", "-")
 
         def _creater(
-            attrsOrChild: t.Mapping[str, str | None] | t.Node,
+            attrsOrChild: dict[str, str] | t.Node,
             *childNodes: t.Node,
         ) -> t.Element:
             if isNode(attrsOrChild):
                 return createElement(name, {}, attrsOrChild, *childNodes)
             else:
-                assert isinstance(attrsOrChild, dict) or attrsOrChild is None
                 return createElement(name, attrsOrChild, *childNodes)
 
         return _creater

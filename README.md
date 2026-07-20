@@ -132,10 +132,24 @@ Import the module, then call the `highlight()` function with a JSON object, like
 import highlighter
 
 html,css = highlighter.highlight(["pre", {}, "interface Foo {};"], lang="webidl")
+print(html)
+# ['pre', {}, ['c-', {'b': ''}, 'interface'], ' ', ['c-', {'g': ''}, 'Foo'], ' {};']
+# or, with `output="html"`:
+# '<pre><c- b>interface</c-> <c- g>Foo</c-> {};</pre>'
 ```
 
-The default output is a 2-tuple,
-with the first being a JSON object for the highlighted markup as JSON-encoded HTML (see below),
+The first required input is a JSON-encoded HTML object (see below for details),
+where the text of the HTML is what's going to be highlighted,
+*or* a string of source code that's going to be highlighted.
+(In the example above, `"interface Foo{};` is what will be syntax-highlighted;
+that string could also be passed by itself.)
+The second is the language to highlight it as,
+which can be [everything that Pygments supports](http://pygments.org/languages/),
+plus "webidl" for WebIDL.
+
+The output is a 2-tuple,
+with the first being a JSON object for the highlighted markup as JSON-encoded HTML (see below)
+or a string of HTML source (see the `output` argument),
 and the second being a string of CSS you can use directly to style the highlighted markup.
 
 Additional possible arguments:
@@ -144,7 +158,7 @@ Additional possible arguments:
 * `lineStart: int = 1` - what line number the text starts at, for line numbering.
 * `lineHighlights: set[int] | str | None = None` - which lines should be given a special `class=line-highlight`, on both the `.line-no` and `.line` elements. The highlighted lines are also automatically numbered, and the line numbers are relative to `lineStart`'s value (thus matching the displayed line number). If passed as a `str`, it's parsed as a comma-separated list of line numbers or ranges, like `"2-4, 6"`, equivalent to `set([2, 3, 4, 6])`.
 * `output: Literal["json"] | Literal["html"] = "json"` - what format to return the highlighted markup in. By default it's a JSON object, but passing "html" causes it to instead be a string of HTML, useful if you're just going to drop the HTML directly into your output anyway. If HTML, it's automatically escaped to be safe.
-* `unescape: bool = False` - if True, automatically processes *some* HTML escapes in the text nodes of the input: any decimal (`&#123;`) or hex (`&#x123;`) escapes, or the five "canonical" named escapes (`&amp;`, `&lt;`, `&gt;`, `&apos;`, `&quot;`). No other named escapes are recognized. This should only be used if your markup pipeline is broken and auto-escapes things (unfortunately common).
+* `unescape: bool = False` - if True, automatically processes *some* HTML escapes in the text nodes and attribute values of the input: any decimal (`&#123;`) or hex (`&#x123;`) escapes, or the five "canonical" named escapes (`&amp;`, `&lt;`, `&gt;`, `&apos;`, `&quot;`). No other named escapes are recognized. This should only be used if your markup pipeline is broken and auto-escapes things (unfortunately common).
 
 
 # HTML as JSON
@@ -178,28 +192,7 @@ if rendering back to HTML,
 remember to correctly escape attribute values and text nodes.
 
 > [!NOTE]
-> It's generally assumed that the root element will be a `["pre", {}]`,
+> You *probably* want the root element of your input to be a `["pre", {}, ...]`,
 > to preserve the linebreaks in your source.
-
-
-Line Numbers or Highlights
---------------------------
-
-You can also add line numbers to the outputted HTML,
-or highlight specific lines.
-
-To add line numbers,
-pass `lineNumbers=True` to `highlight()`.
-By default the numbers start at 1;
-to change that, pass `lineStart=5` or whatever you need.
-
-To highlight *specific* lines,
-pass `lineHighlights=...`,
-where the `...` is either a `set()` containing the line numbers you want highlighted,
-or a comma-separated string containing line numbers and/or ranges, like `1, 3-5`
-(equivalent to `set(1, 3, 4, 5)`).
-Again, it defaults to assuming the first line is line 1,
-and you can change this by passing `lineStart`.
-
-The two options can be combined for both numbering and highlighting.
+> The highlighted output will still, generally, rely on your linebreaks.
 

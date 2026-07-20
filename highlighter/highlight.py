@@ -34,7 +34,7 @@ def warn(msg: str, *rargs: t.Any, **kwargs: dict[t.Any, t.Any]) -> t.NoReturn:
 
 
 def highlight(
-    html: t.Element,
+    html: t.Element | str,
     lang: str,
     lineNumbers: bool = False,
     lineStart: int = 1,
@@ -44,6 +44,9 @@ def highlight(
 ) -> tuple[t.Element, str] | tuple[str, str]:
     if lineHighlights is None:
         lineHighlights = set()
+    if isinstance(html, str):
+        html = t.cast("t.Element", ["pre", {}, html])
+    dom.normalizeElement(html)
     assert dom.isElement(html)
     if unescape:
         html = dom.unescapeElement(html)
