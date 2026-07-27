@@ -261,6 +261,75 @@ def test_css_line_highlight():
     assert format(html) == format(expected)
 
 
+def test_css_markup():
+    src = [
+        """
+    .foo {
+        bar: """,
+        ["b", {}, "baz"],
+        """;
+    }
+    """,
+    ]
+    html, _ = highlighter.highlight(["pre", {}, *src], lang="css")
+    expected = [
+        "pre",
+        {},
+        "    ",
+        ["c-", {"f": ""}, ".foo "],
+        ["c-", {"p": ""}, "{"],
+        "\n",
+        "        ",
+        ["c-", {"k": ""}, "bar"],
+        ["c-", {"p": ""}, ":"],
+        ": ",
+        ["b", {}, "baz", ["c-", {"p": ""}, ";"]],
+        "\n",
+        "    ",
+        ["c-", {"p": ""}, "}"],
+        "\n",
+        "    ",
+        "\n",
+    ]
+
+    assert format(html) == format(expected)
+
+
+def test_css_markup_crossing_lines():
+    src = [
+        """
+    .foo {
+        bar: """,
+        ["b", {}, "baz;\n  qux:"],
+        """ foo2;
+    }
+    """,
+    ]
+    html, _ = highlighter.highlight(["pre", {}, *src], lang="css")
+    expected = [
+        "pre",
+        {},
+        "    ",
+        ["c-", {"f": ""}, ".foo "],
+        ["c-", {"p": ""}, "{"],
+        "\n",
+        "        ",
+        ["c-", {"k": ""}, "bar"],
+        ["c-", {"p": ""}, ":"],
+        ": ",
+        ["b", {}, "baz", ["c-", {"p": ""}, ";"], "\n", "  ", ["c-", {"k": ""}, "qux"], ["c-", {"p": ""}, ":"], ":"],
+        "foo2",
+        ["c-", {"p": ""}, ";"],
+        "\n",
+        "    ",
+        ["c-", {"p": ""}, "}"],
+        "\n",
+        "    ",
+        "\n",
+    ]
+
+    assert format(html) == format(expected)
+
+
 if __name__ == "__main__":
     pass
-
