@@ -7,6 +7,13 @@ import pytest
 import highlighter
 
 
+def format(data: list | str) -> str:
+    if isinstance(data, str):
+        data = json.loads(data)
+    ret = json.dumps(data, indent=2, sort_keys=True)
+    return ret
+
+
 def test_css():
     src = """.foo { bar: baz; }"""
     html, _ = highlighter.highlight(["pre", {}, src], lang="css")
@@ -151,8 +158,109 @@ def test_html():
     assert format(html) == format(expected)
 
 
-def format(data: list | str) -> str:
-    if isinstance(data, str):
-        data = json.loads(data)
-    ret = json.dumps(data, indent=2, sort_keys=True)
-    return ret
+def test_css_line_numbers():
+    src = """
+    .foo {
+        bar: baz;
+    }
+    """
+    html, _ = highlighter.highlight(["pre", {}, src], lang="css", lineNumbers=True)
+    expected = [
+        "pre",
+        {"class": "line-numbered"},
+        ["span", {"class": "line-no", "data-line": "1"}],
+        ["span", {"class": "line"}, "    ", ["c-", {"f": ""}, ".foo "], ["c-", {"p": ""}, "{"], ""],
+        ["span", {"class": "line-no", "data-line": "2"}],
+        [
+            "span",
+            {"class": "line"},
+            "",
+            "        ",
+            ["c-", {"k": ""}, "bar"],
+            ["c-", {"p": ""}, ":"],
+            " baz",
+            ["c-", {"p": ""}, ";"],
+            "",
+        ],
+        ["span", {"class": "line-no", "data-line": "3"}],
+        ["span", {"class": "line"}, "", "    ", ["c-", {"p": ""}, "}"], ""],
+        ["span", {"class": "line-no", "data-line": "4"}],
+        ["span", {"class": "line"}, "", "    ", ""],
+        ["span", {"class": "line-no", "data-line": "5"}],
+        ["span", {"class": "line"}, ""],
+    ]
+    assert format(html) == format(expected)
+
+
+def test_css_line_start():
+    src = """
+    .foo {
+        bar: baz;
+    }
+    """
+    html, _ = highlighter.highlight(["pre", {}, src], lang="css", lineNumbers=True, lineStart=5)
+    expected = [
+        "pre",
+        {"class": "line-numbered"},
+        ["span", {"class": "line-no", "data-line": "5"}],
+        ["span", {"class": "line"}, "    ", ["c-", {"f": ""}, ".foo "], ["c-", {"p": ""}, "{"], ""],
+        ["span", {"class": "line-no", "data-line": "6"}],
+        [
+            "span",
+            {"class": "line"},
+            "",
+            "        ",
+            ["c-", {"k": ""}, "bar"],
+            ["c-", {"p": ""}, ":"],
+            " baz",
+            ["c-", {"p": ""}, ";"],
+            "",
+        ],
+        ["span", {"class": "line-no", "data-line": "7"}],
+        ["span", {"class": "line"}, "", "    ", ["c-", {"p": ""}, "}"], ""],
+        ["span", {"class": "line-no", "data-line": "8"}],
+        ["span", {"class": "line"}, "", "    ", ""],
+        ["span", {"class": "line-no", "data-line": "9"}],
+        ["span", {"class": "line"}, ""],
+    ]
+    assert format(html) == format(expected)
+
+
+def test_css_line_highlight():
+    src = """
+    .foo {
+        bar: baz;
+    }
+    """
+    html, _ = highlighter.highlight(["pre", {}, src], lang="css", lineHighlights="2,3")
+    expected = [
+        "pre",
+        {"class": "line-numbered"},
+        ["span", {"class": "line-no"}],
+        ["span", {"class": "line"}, "    ", ["c-", {"f": ""}, ".foo "], ["c-", {"p": ""}, "{"], ""],
+        ["span", {"class": "line-no highlight-line", "data-line": "2"}],
+        [
+            "span",
+            {"class": "line highlight-line"},
+            "",
+            "        ",
+            ["c-", {"k": ""}, "bar"],
+            ["c-", {"p": ""}, ":"],
+            " baz",
+            ["c-", {"p": ""}, ";"],
+            "",
+        ],
+        ["span", {"class": "line-no highlight-line", "data-line": "3"}],
+        ["span", {"class": "line highlight-line"}, "", "    ", ["c-", {"p": ""}, "}"], ""],
+        ["span", {"class": "line-no"}],
+        ["span", {"class": "line"}, "", "    ", ""],
+        ["span", {"class": "line-no"}],
+        ["span", {"class": "line"}, ""],
+    ]
+
+    assert format(html) == format(expected)
+
+
+if __name__ == "__main__":
+    pass
+
