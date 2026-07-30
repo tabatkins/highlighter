@@ -43,21 +43,17 @@ def test_css_multiline():
     expected = [
         "pre",
         {},
-        "\t",
+        "\n\t",
         ["c-", {"f": ""}, ".foo "],
         ["c-", {"p": ""}, "{"],
-        "\n",
-        "\t\t",
+        "\n\t\t",
         ["c-", {"k": ""}, "bar"],
         ["c-", {"p": ""}, ":"],
         " baz",
         ["c-", {"p": ""}, ";"],
-        "\n",
-        "\t",
+        "\n\t",
         ["c-", {"p": ""}, "}"],
-        "\n",
-        "\t",
-        "\n",
+        "\n\t",
     ]
     assert format(html) == format(expected)
 
@@ -74,10 +70,9 @@ def test_html():
     expected = [
         "pre",
         {},
-        "\t",
+        "\n\t",
         ["c-", {"cp": ""}, "<!doctype html>"],
-        "\n",
-        "\t",
+        "\n\t",
         ["c-", {"p": ""}, "<"],
         ["c-", {"f": ""}, "title"],
         ["c-", {"p": ""}, ">"],
@@ -90,8 +85,7 @@ def test_html():
         ["c-", {"p": ""}, "</"],
         ["c-", {"f": ""}, "title"],
         ["c-", {"p": ""}, ">"],
-        "\n",
-        "\t",
+        "\n\t",
         ["c-", {"p": ""}, "<"],
         ["c-", {"f": ""}, "style"],
         ["c-", {"p": ""}, ">."],
@@ -108,8 +102,7 @@ def test_html():
         ["c-", {"p": ""}, "}</"],
         ["c-", {"f": ""}, "style"],
         ["c-", {"p": ""}, ">"],
-        "\n",
-        "\t",
+        "\n\t",
         ["c-", {"p": ""}, "<"],
         ["c-", {"f": ""}, "script"],
         ["c-", {"p": ""}, ">"],
@@ -127,8 +120,7 @@ def test_html():
         ["c-", {"p": ""}, "}</"],
         ["c-", {"f": ""}, "script"],
         ["c-", {"p": ""}, ">"],
-        "\n",
-        "\t",
+        "\n\t",
         ["c-", {"p": ""}, "<"],
         ["c-", {"f": ""}, "p"],
         " ",
@@ -151,9 +143,7 @@ def test_html():
         ["c-", {"p": ""}, "</"],
         ["c-", {"f": ""}, "i"],
         ["c-", {"p": ""}, ">"],
-        "\n",
-        "\t",
-        "\n",
+        "\n\t",
     ]
     assert format(html) == format(expected)
 
@@ -169,26 +159,25 @@ def test_css_line_numbers():
         "pre",
         {"class": "line-numbered"},
         ["span", {"class": "line-no", "data-line": "1"}],
-        ["span", {"class": "line"}, "    ", ["c-", {"f": ""}, ".foo "], ["c-", {"p": ""}, "{"], ""],
+        ["span", {"class": "line"}],
         ["span", {"class": "line-no", "data-line": "2"}],
+        ["span", {"class": "line"}, "    ", ["c-", {"f": ""}, ".foo "], ["c-", {"p": ""}, "{"]],
+        ["span", {"class": "line-no", "data-line": "3"}],
         [
             "span",
             {"class": "line"},
-            "",
             "        ",
             ["c-", {"k": ""}, "bar"],
             ["c-", {"p": ""}, ":"],
             " baz",
             ["c-", {"p": ""}, ";"],
-            "",
         ],
-        ["span", {"class": "line-no", "data-line": "3"}],
-        ["span", {"class": "line"}, "", "    ", ["c-", {"p": ""}, "}"], ""],
         ["span", {"class": "line-no", "data-line": "4"}],
-        ["span", {"class": "line"}, "", "    ", ""],
+        ["span", {"class": "line"}, "    ", ["c-", {"p": ""}, "}"]],
         ["span", {"class": "line-no", "data-line": "5"}],
-        ["span", {"class": "line"}, ""],
+        ["span", {"class": "line"}, "    "],
     ]
+
     assert format(html) == format(expected)
 
 
@@ -203,25 +192,23 @@ def test_css_line_start():
         "pre",
         {"class": "line-numbered"},
         ["span", {"class": "line-no", "data-line": "5"}],
-        ["span", {"class": "line"}, "    ", ["c-", {"f": ""}, ".foo "], ["c-", {"p": ""}, "{"], ""],
+        ["span", {"class": "line"}],
         ["span", {"class": "line-no", "data-line": "6"}],
+        ["span", {"class": "line"}, "    ", ["c-", {"f": ""}, ".foo "], ["c-", {"p": ""}, "{"]],
+        ["span", {"class": "line-no", "data-line": "7"}],
         [
             "span",
             {"class": "line"},
-            "",
             "        ",
             ["c-", {"k": ""}, "bar"],
             ["c-", {"p": ""}, ":"],
             " baz",
             ["c-", {"p": ""}, ";"],
-            "",
         ],
-        ["span", {"class": "line-no", "data-line": "7"}],
-        ["span", {"class": "line"}, "", "    ", ["c-", {"p": ""}, "}"], ""],
         ["span", {"class": "line-no", "data-line": "8"}],
-        ["span", {"class": "line"}, "", "    ", ""],
+        ["span", {"class": "line"}, "    ", ["c-", {"p": ""}, "}"]],
         ["span", {"class": "line-no", "data-line": "9"}],
-        ["span", {"class": "line"}, ""],
+        ["span", {"class": "line"}, "    "],
     ]
     assert format(html) == format(expected)
 
@@ -232,30 +219,28 @@ def test_css_line_highlight():
         bar: baz;
     }
     """
-    html, _ = highlighter.highlight(["pre", {}, src], lang="css", lineHighlights="2,3")
+    html, _ = highlighter.highlight(["pre", {}, src], lang="css", lineHighlights="3,4")
     expected = [
         "pre",
         {"class": "line-numbered"},
         ["span", {"class": "line-no"}],
-        ["span", {"class": "line"}, "    ", ["c-", {"f": ""}, ".foo "], ["c-", {"p": ""}, "{"], ""],
-        ["span", {"class": "line-no highlight-line", "data-line": "2"}],
+        ["span", {"class": "line"}],
+        ["span", {"class": "line-no"}],
+        ["span", {"class": "line"}, "    ", ["c-", {"f": ""}, ".foo "], ["c-", {"p": ""}, "{"]],
+        ["span", {"class": "line-no highlight-line", "data-line": "3"}],
         [
             "span",
             {"class": "line highlight-line"},
-            "",
             "        ",
             ["c-", {"k": ""}, "bar"],
             ["c-", {"p": ""}, ":"],
             " baz",
             ["c-", {"p": ""}, ";"],
-            "",
         ],
-        ["span", {"class": "line-no highlight-line", "data-line": "3"}],
-        ["span", {"class": "line highlight-line"}, "", "    ", ["c-", {"p": ""}, "}"], ""],
+        ["span", {"class": "line-no highlight-line", "data-line": "4"}],
+        ["span", {"class": "line highlight-line"}, "    ", ["c-", {"p": ""}, "}"]],
         ["span", {"class": "line-no"}],
-        ["span", {"class": "line"}, "", "    ", ""],
-        ["span", {"class": "line-no"}],
-        ["span", {"class": "line"}, ""],
+        ["span", {"class": "line"}, "    "],
     ]
 
     assert format(html) == format(expected)
@@ -275,21 +260,18 @@ def test_css_markup():
     expected = [
         "pre",
         {},
-        "    ",
+        "\n    ",
         ["c-", {"f": ""}, ".foo "],
         ["c-", {"p": ""}, "{"],
-        "\n",
-        "        ",
+        "\n        ",
         ["c-", {"k": ""}, "bar"],
         ["c-", {"p": ""}, ":"],
-        ": ",
-        ["b", {}, "baz", ["c-", {"p": ""}, ";"]],
-        "\n",
-        "    ",
+        " ",
+        ["b", {}, "baz"], 
+        ["c-", {"p": ""}, ";"],
+        "\n    ",
         ["c-", {"p": ""}, "}"],
-        "\n",
-        "    ",
-        "\n",
+        "\n    ",
     ]
 
     assert format(html) == format(expected)
@@ -309,23 +291,27 @@ def test_css_markup_crossing_lines():
     expected = [
         "pre",
         {},
-        "    ",
+        "\n    ",
         ["c-", {"f": ""}, ".foo "],
         ["c-", {"p": ""}, "{"],
-        "\n",
-        "        ",
+        "\n        ",
         ["c-", {"k": ""}, "bar"],
         ["c-", {"p": ""}, ":"],
-        ": ",
-        ["b", {}, "baz", ["c-", {"p": ""}, ";"], "\n", "  ", ["c-", {"k": ""}, "qux"], ["c-", {"p": ""}, ":"], ":"],
-        "foo2",
+        " ",
+        [
+            "b",
+            {},
+            "baz",
+            ["c-", {"p": ""}, ";"],
+            "\n  ",
+            ["c-", {"k": ""}, "qux"],
+            ["c-", {"p": ""}, ":"],
+        ],
+        " foo2",
         ["c-", {"p": ""}, ";"],
-        "\n",
-        "    ",
+        "\n    ",
         ["c-", {"p": ""}, "}"],
-        "\n",
-        "    ",
-        "\n",
+        "\n    ",
     ]
 
     assert format(html) == format(expected)
@@ -333,3 +319,26 @@ def test_css_markup_crossing_lines():
 
 if __name__ == "__main__":
     pass
+
+    def serializeNode(el) -> str:
+        if isinstance(el, str):
+            return el
+        html = "<{0}".format(el[0])
+        for attrName, attrValue in el[1].items():
+            if attrValue == "":
+                html += " {0}".format(attrName)
+            else:
+                html += " {0}='{1}'".format(attrName, attrValue)
+        html += ">"
+        for child in el[2:]:
+            html += serializeNode(child)
+        html += "</{0}>".format(el[0])
+        return html
+
+    src = """
+    .foo {
+        bar: baz;
+    }
+    """
+    html, _ = highlighter.highlight(["pre", {}, src], lang="css", lineNumbers=True)
+    print(repr(html))

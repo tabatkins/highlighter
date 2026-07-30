@@ -12,13 +12,17 @@ class CSSLexer(RegexLexer):
     filenames: typing.ClassVar = ["*.css"]
     flags = re.DOTALL
 
+    def __init__(self, **options: typing.Any) -> None:
+        RegexLexer.__init__(self, **options)
+
     tokens: typing.ClassVar = {
         "root": [
             (r"", Text, "rules"),
         ],
         "comment": [
             (r"\*/", Comment, "#pop"),
-            (r".", Comment),
+            (r"[^*]+", Comment),
+            (r"\*", Comment),
         ],
         "at-rule": [
             include("values"),

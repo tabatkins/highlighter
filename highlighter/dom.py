@@ -71,9 +71,17 @@ def addClass(node: t.Element, cls: str) -> t.Element:
     return node
 
 
-def appendChild(el: t.Element, *childNodes: t.Node) -> t.Element:
-    el.extend(childNodes)
-    return el
+def appendChild(el: t.Element, *childNodes: t.Node) -> None:
+    for child in childNodes:
+        if isElement(child):
+            el.append(child)
+        else:
+            appendText(el, child)
+
+
+def appendText(el: t.Element | list[t.Node], text: str) -> None:
+    if text:
+        el.append(text)
 
 
 def setChild(el: t.Element, index: int, childNode: t.Node) -> t.Element:

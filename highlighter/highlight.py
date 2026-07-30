@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import ast
 import collections
-import itertools
+import dataclasses
 import re
 
 import pygments
 import widlparser
-from pygments import formatters
 from pygments.lexers import get_lexer_by_name
 
 from . import dom, styles, t
@@ -18,11 +16,16 @@ from .lexers import CSSLexer
 if t.TYPE_CHECKING:
     from pygments.lexer import Lexer
 
-customLexers: dict[str, t.Callable[[], Lexer]] = {
+customLexers: dict[str, t.Callable[..., Lexer]] = {
     "css": CSSLexer,
 }
 
-ColoredText = collections.namedtuple("ColoredText", ["text", "color"])
+
+@dataclasses.dataclass
+class ColoredText:
+    text: str
+    # None indicates uncolored text
+    color: str | None
 
 
 def die(msg: str, *rargs: t.Any, **kwargs: dict[t.Any, t.Any]) -> t.NoReturn:
@@ -102,7 +105,49 @@ def highlightEl(el: t.Element, lang: str) -> t.Element:
         coloredText = highlightWithWebIDL(text)
     else:
         coloredText = highlightWithPygments(text, lang)
+    coloredText = mergeColors(coloredText)
+    coloredText = readdWhitespacePrefix(text, coloredText)
     return mergeHighlighting(el, coloredText)
+
+
+def mergeColors(coloredText: t.Deque[ColoredText]) -> t.Deque[ColoredText]:
+    """
+    Some highlighters gratuitously emit multiple tokens in a row with the same color,
+    which makes other modifications I perform annoying.
+    This does a pass to merge those together.
+    """
+    ret: t.Deque[ColoredText] = collections.deque()
+    for token in coloredText:
+        if token.text == "":
+            # Drop empty tokens
+            continue
+        if ret and ret[-1].color == token.color:
+            ret[-1].text += token.text
+        else:
+            ret.append(token)
+    return ret
+
+
+def readdWhitespacePrefix(rawText: str, coloredText: t.Deque[ColoredText]) -> t.Deque[ColoredText]:
+    """
+    If the raw text starts with whitespace, Pygments auto-strips it >:(
+    So, we need to add it back in, as an uncolored chunk of text.
+    But also, it doesn't... always strip whitespace. So check for that.
+    """
+    if not coloredText:
+        # Empty colored text, nothing to do
+        return coloredText
+    coloredMatch = re.match(r"\s+", coloredText[0].text)
+    if coloredMatch:
+        # whitespace was kept by the formatter, so nothing to do
+        return coloredText
+    textMatch = re.match(r"\s+", rawText)
+    if not textMatch:
+        # No whitespace on the text, nothing to do
+        return coloredText
+    prefix = ColoredText(textMatch[0], None)
+    coloredText.appendleft(prefix)
+    return coloredText
 
 
 def highlightWithWebIDL(text: str) -> t.Deque[ColoredText]:
@@ -215,7 +260,7 @@ def highlightWithPygments(text: str, lang: str) -> t.Deque[ColoredText]:
     if lexer is None:
         die("'{0}' isn't a known syntax-highlighting language. See http://pygments.org/docs/lexers/.", lang)
         return
-    rawTokens = str(pygments.highlight(text, lexer, formatters.RawTokenFormatter()), encoding="utf-8")
+    rawTokens = [(str(ttype), val) for (ttype, val) in pygments.lex(text, lexer)]
     coloredText = coloredTextFromRawTokens(rawTokens)
     return coloredText
 
@@ -241,16 +286,18 @@ def mergeHighlighting(el: t.Element, coloredText: t.Deque[ColoredText]) -> t.Ele
         return el
 
     def colorizeText(text: str, coloredText: t.Deque[ColoredText]) -> list[t.Node]:
-        nodes = []
+        nodes: list[t.Node] = []
         while text and coloredText:
             nextColor = coloredText.popleft()
             if len(nextColor.text) <= len(text):
+                # Use the entire nextColor node, only part of text
                 if nextColor.color is None:
                     nodes.append(nextColor.text)
                 else:
                     nodes.append(createEl(nextColor.color, nextColor.text))
                 text = text[len(nextColor.text) :]
-            else:  # Need to use only part of the nextColor node
+            else:
+                # Use all of text, only part of the nextColor node
                 if nextColor.color is None:
                     nodes.append(text)
                 else:
@@ -306,7 +353,7 @@ def serializeToHtml(el: t.Element) -> str:
     return html
 
 
-def coloredTextFromRawTokens(text: str) -> t.Deque[ColoredText]:
+def coloredTextFromRawTokens(rawTokens: t.Sequence[tuple[str, str]]) -> t.Deque[ColoredText]:
     colorFromName = {
         "Token.Comment": "c",
         "Token.Keyword": "k",
@@ -375,25 +422,11 @@ def coloredTextFromRawTokens(text: str) -> t.Deque[ColoredText]:
             list.append(ct)
 
     textList: t.Deque[ColoredText] = collections.deque()
-    currentCT: ColoredText | None = None
-    for line in text.split("\n"):
-        if not line:
-            continue
-        tokenName, _, tokenTextRepr = line.partition("\t")
-        color = colorFromName.get(tokenName)
-        text = ast.literal_eval(tokenTextRepr)
+    for tokenName, text in rawTokens:
         if not text:
             continue
-        if not currentCT:
-            currentCT = ColoredText(text, color)
-        elif currentCT.color == color:
-            # Repeated color, merge into current
-            currentCT = currentCT._replace(text=currentCT.text + text)
-        else:
-            addCtToList(textList, currentCT)
-            currentCT = ColoredText(text, color)
-    if currentCT:
-        addCtToList(textList, currentCT)
+        color = colorFromName.get(tokenName)
+        addCtToList(textList, ColoredText(text, color))
     return textList
 
 
@@ -410,9 +443,9 @@ def normalizeLanguageName(lang: str) -> str:
 
 def lexerFromLang(lang: str) -> Lexer | None:
     if lang in customLexers:
-        return customLexers[lang]()
+        return customLexers[lang](encoding="utf-8", stripnl=False)
     try:
-        return get_lexer_by_name(lang, encoding="utf-8", stripAll=True)
+        return get_lexer_by_name(lang, encoding="utf-8", stripnl=False)
     except:
         return None
 
@@ -427,34 +460,29 @@ def addLineWrappers(
     # Add an attr for the line number, and if needed, the end line.
     if highlights is None:
         highlights = set()
-    lineWrapper = dom.E.span({"class": "line"})
-    elChildren = dom.children(el)
-    el = dom.withoutChildren(el)
-    for node in elChildren:
+
+    # Split text nodes on newlines, grouping elements and text between
+    # each linebreak into a line array.
+    lines: list[list[t.Node]] = [[]]
+    for node in dom.children(el):
         if dom.isElement(node):
-            dom.appendChild(lineWrapper, node)
+            lines[-1].append(node)
         else:
-            while True:
-                if "\n" in node:
-                    pre, _, post = node.partition("\n")
-                    dom.appendChild(lineWrapper, pre)
-                    dom.appendChild(el, dom.E.span({"class": "line-no"}))
-                    dom.appendChild(el, lineWrapper)
-                    lineWrapper = dom.E.span({"class": "line"})
-                    node = post
-                else:
-                    dom.appendChild(lineWrapper, node)
-                    break
-    if len(lineWrapper):
-        dom.appendChild(el, dom.E.span({"class": "line-no"}))
-        dom.appendChild(el, lineWrapper)
-    # Number the lines
+            while "\n" in node:
+                pre, _, node = node.partition("\n")
+                dom.appendText(lines[-1], pre)
+                lines.append([])
+            dom.appendText(lines[-1], node)
+
+    # Clear el so we can fill it with line numbers instead.
+    el = dom.withoutChildren(el)
+
+    # Fill el with new elements, and add attrs for line-numbering as appropraite
     lineNumber = start
-    for lineNo, lineWrapper in grouper(dom.children(el), 2):
-        assert lineNo is not None
-        assert dom.isElement(lineNo)
-        assert lineWrapper is not None
-        assert dom.isElement(lineWrapper)
+    for line in lines:
+        lineNo = dom.E.span({"class": "line-no"})
+        lineWrapper = dom.E.span({"class": "line"}, *line)
+        dom.appendChild(el, lineNo, lineWrapper)
         if numbers or lineNumber in highlights:
             dom.attrs(lineNo)["data-line"] = str(lineNumber)
         if lineNumber in highlights:
@@ -483,23 +511,3 @@ def countInternalNewlines(el: t.Element) -> int:
         else:
             count += node.count("\n")
     return count
-
-
-def grouper[T](
-    iterable: t.Sequence[T],
-    n: int,
-    fillvalue: T | None = None,
-) -> itertools.zip_longest[tuple[T | None, ...]]:
-    "Collect data into fixed-length chunks or blocks"
-    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
-    args = [iter(iterable)] * n
-    return itertools.zip_longest(fillvalue=fillvalue, *args)
-
-
-if __name__ == "__main__":
-
-    def main() -> t.NoReturn:
-        msg = "Not intended to be run at command-line; run ../__init__.py."
-        raise Exception(msg)
-
-    main()
