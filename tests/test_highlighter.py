@@ -267,7 +267,7 @@ def test_css_markup():
         ["c-", {"k": ""}, "bar"],
         ["c-", {"p": ""}, ":"],
         " ",
-        ["b", {}, "baz"], 
+        ["b", {}, "baz"],
         ["c-", {"p": ""}, ";"],
         "\n    ",
         ["c-", {"p": ""}, "}"],
@@ -317,28 +317,46 @@ def test_css_markup_crossing_lines():
     assert format(html) == format(expected)
 
 
+def test_webidl():
+    src = ["""
+    interface Foo {
+      undefined bar(DOMString baz, optional long qux);
+    };
+    """]
+    html, _ = highlighter.highlight(["pre", {}, *src], lang="webidl")
+    expected = [
+        "pre",
+        {},
+        "\n    ",
+        ["c-", {"b": ""}, "interface"],
+        " ",
+        ["c-", {"g": ""}, "Foo"],
+        " {\n      ",
+        ["c-", {"b": ""}, "undefined"],
+        " ",
+        ["c-", {"g": ""}, "bar"],
+        "(",
+        ["c-", {"b": ""}, "DOMString"],
+        " ",
+        ["c-", {"g": ""}, "baz"],
+        ", ",
+        ["c-", {"b": ""}, "optional"],
+        " ",
+        ["c-", {"b": ""}, "long"],
+        " ",
+        ["c-", {"g": ""}, "qux"],
+        ");\n    };\n    ",
+    ]
+
+    assert format(html) == format(expected)
+
+
 if __name__ == "__main__":
     pass
-
-    def serializeNode(el) -> str:
-        if isinstance(el, str):
-            return el
-        html = "<{0}".format(el[0])
-        for attrName, attrValue in el[1].items():
-            if attrValue == "":
-                html += " {0}".format(attrName)
-            else:
-                html += " {0}='{1}'".format(attrName, attrValue)
-        html += ">"
-        for child in el[2:]:
-            html += serializeNode(child)
-        html += "</{0}>".format(el[0])
-        return html
-
-    src = """
-    .foo {
-        bar: baz;
-    }
-    """
-    html, _ = highlighter.highlight(["pre", {}, src], lang="css", lineNumbers=True)
+    src = ["""
+    interface Foo {
+      undefined bar(DOMString baz, optional long qux);
+    };
+    """]
+    html, _ = highlighter.highlight(["pre", {}, *src], lang="webidl")
     print(repr(html))
