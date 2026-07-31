@@ -1,20 +1,31 @@
 from __future__ import annotations
 
 import json
+import typing
 
+import deepdiff
 import pytest
 
 import highlighter
 
+if typing.TYPE_CHECKING:
+    from typing import Any
+    type JSONValue = dict[str, Any] | list[Any] | str | int | float | bool | None
+    type Element = list[str | dict[str, str] | Node]
+    type Node = Element | str
 
-def format(data: list | str) -> str:
+
+def format(data: JSONValue) -> str:
     if isinstance(data, str):
         data = json.loads(data)
     ret = json.dumps(data, indent=2, sort_keys=True)
     return ret
 
+def compare(expected: JSONValue, actual: JSONValue) -> deepdiff.DeepDiff | None:
+    return deepdiff.DeepDiff(expected, actual, view=deepdiff.helper.COLORED_COMPACT_VIEW)
 
-def test_css():
+
+def test_css() -> None:
     src = """.foo { bar: baz; }"""
     html, _ = highlighter.highlight(["pre", {}, src], lang="css")
     expected = [
@@ -30,10 +41,11 @@ def test_css():
         " ",
         ["c-", {"p": ""}, "}"],
     ]
-    assert format(html) == format(expected)
+    diff = compare(expected, html)
+    assert not diff, str(diff)
 
 
-def test_css_multiline():
+def test_css_multiline() -> None:
     src = """
 	.foo {
 		bar: baz;
@@ -55,10 +67,11 @@ def test_css_multiline():
         ["c-", {"p": ""}, "}"],
         "\n\t",
     ]
-    assert format(html) == format(expected)
+    diff = compare(expected, html)
+    assert not diff, str(diff)
 
 
-def test_html():
+def test_html() -> None:
     src = """
 	<!doctype html>
 	<title>foo <s>&lt;></title>
@@ -145,10 +158,11 @@ def test_html():
         ["c-", {"p": ""}, ">"],
         "\n\t",
     ]
-    assert format(html) == format(expected)
+    diff = compare(expected, html)
+    assert not diff, str(diff)
 
 
-def test_css_line_numbers():
+def test_css_line_numbers() -> None:
     src = """
     .foo {
         bar: baz;
@@ -178,10 +192,11 @@ def test_css_line_numbers():
         ["span", {"class": "line"}, "    "],
     ]
 
-    assert format(html) == format(expected)
+    diff = compare(expected, html)
+    assert not diff, str(diff)
 
 
-def test_css_line_start():
+def test_css_line_start() -> None:
     src = """
     .foo {
         bar: baz;
@@ -210,10 +225,11 @@ def test_css_line_start():
         ["span", {"class": "line-no", "data-line": "9"}],
         ["span", {"class": "line"}, "    "],
     ]
-    assert format(html) == format(expected)
+    diff = compare(expected, html)
+    assert not diff, str(diff)
 
 
-def test_css_line_highlight():
+def test_css_line_highlight() -> None:
     src = """
     .foo {
         bar: baz;
@@ -243,11 +259,12 @@ def test_css_line_highlight():
         ["span", {"class": "line"}, "    "],
     ]
 
-    assert format(html) == format(expected)
+    diff = compare(expected, html)
+    assert not diff, str(diff)
 
 
-def test_css_markup():
-    src = [
+def test_css_markup() -> None:
+    src: list[Node] = [
         """
     .foo {
         bar: """,
@@ -274,11 +291,12 @@ def test_css_markup():
         "\n    ",
     ]
 
-    assert format(html) == format(expected)
+    diff = compare(expected, html)
+    assert not diff, str(diff)
 
 
-def test_css_markup_crossing_lines():
-    src = [
+def test_css_markup_crossing_lines() -> None:
+    src: list[Node] = [
         """
     .foo {
         bar: """,
@@ -314,10 +332,11 @@ def test_css_markup_crossing_lines():
         "\n    ",
     ]
 
-    assert format(html) == format(expected)
+    diff = compare(expected, html)
+    assert not diff, str(diff)
 
 
-def test_webidl():
+def test_webidl() -> None:
     src = ["""
     interface Foo {
       undefined bar(DOMString baz, optional long qux);
@@ -348,7 +367,8 @@ def test_webidl():
         ");\n    };\n    ",
     ]
 
-    assert format(html) == format(expected)
+    diff = compare(expected, html)
+    assert not diff, str(diff)
 
 
 if __name__ == "__main__":
