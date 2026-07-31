@@ -11,7 +11,7 @@ setup(
     name="bs-highlighter",
     version=semver,
     author="Tab Atkins-Bittner",
-    description="A command-line highlighter syntax-highlighter, using Pygments and widlparser.",
+    description="A command-line syntax-highlighter, using Pygments and widlparser.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/tabatkins/highlighter",
@@ -19,5 +19,8 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     python_requires=">=3.7",
-    entry_points={"console_scripts": ["highlight = highlighter:cli"]},
+    entry_points={"console_scripts": [
+        "bs-highlight = highlighter:cli",
+        "bs-highlight-server = highlighter:server",
+    ]},
 )

@@ -1,4 +1,7 @@
-__all__ = ["highlight", "lexers", "styles"]
+__all__ = ["highlight", "cli", "lexers", "server", "styles"]
 
-from .highlight import highlight
+from . import styles
 from .cli import cli
+from .highlight import highlight
+from .lexers import CSSLexer
+from .server import server
