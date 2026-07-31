@@ -8,6 +8,7 @@ packaging==26.2
 pylint==4.0.5
 pytest==9.1.1
 ruff==0.15.12
+setuptools==82.0.1
 twine==6.2.0
 types-Pygments
 types-setuptools
