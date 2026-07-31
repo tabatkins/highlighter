@@ -19,42 +19,56 @@ not the text directly.
 
 ## Using As a Single-Shot
 
-You can install this as a command-line script using `pip`: `pip install bs-highlighter`.
-This will create a command `highlight` which invokes the CLI interface.
-Or, without installing, you can directly run the `__init__.py` script in this folder,
-though that does still require you to install the prereqs;
-see `requirements.txt`.
+You can install this as a command-line script using `pipx`: `pipx install bs-highlighter`.
+This will create a command `bs-highlighter` which invokes the CLI interface,
+and a command `bs-highlighter-server` which starts an HTTP server
+(useful if you're doing a lot of highlights and don't want to pay Python startup costs repeatedly; see below for details).
 
-When invoked, you must pass the markup to be highlighted as a string of JSON (see below) as STDIN, and the desired highlighting language as the first argument, like:
+Basic usage requires you to pass the language you're highlighting as, followed by the text you want to highlight:
 
 ```bash
-echo '["pre", {}, "interface Foo {};"]' | ./__init__.py webidl
+bs-highlighter webidl "interface Foo {};"
 ```
 
 > [!TIP]
 > The supported languages are [everything that Pygments supports](http://pygments.org/languages/),
 > plus "webidl" for WebIDL.
+> I also use a custom CSS highlighter that better handles arbitrary modern CSS.
 
-The return value is, by default, 
-a JSON object containing two keys:
-`html`, which contains the highlighted markup as JSON-encoded HTML (see below),
-and `css` which is a string of CSS you can use directly to style the highlighted markup.
+If you want to highlight somethign that already contains markup, 
+instead pass JSON-encoded HTML (see below), like:
+
+```bash
+bs-highlighter webidl '["pre", {}, "interface ", ["dfn", {"id":"dom-foo"}, "Foo"], " {};"]'
+```
+
+If you pass `-` as the text, it will instead read from STDIN.
+
+By default, the command returns the highlighted HTML as JSON-encoded HTML (see below),
+but you can also have it return the output as HTMl source text,
+and/or include some useful CSS to be used with the HTML.
+See the command-line options in the next section.
 
 ### Command-Line Options
 
 Highlighter has a number of command-line options to customize its operation
-(many inspired by its first major user,
-if they seem oddly ideosyncratic).
 
 <dl>
-<dt><code>--output=json</code> or <code>--output=html</code>
+<dt><code>--input = auto | json | text</code>
+<dd>
+
+Defaults to `auto`.
+
+Specifies whether the input value is JSON-encoded HTML or raw text.
+The default value, `auto`, just checks if the first character of the input is a `"["`.
+
+<dt><code>--output = json | html</code>
 <dd>
 
 Defaults to `json`.
 
-Determines whether the highlighted output is returned as JSON-encoded HTML
-(like the input),
-or just as a plain string of HTML.
+Determines whether the highlighted output is returned as JSON-encoded HTML,
+or HTML source text.
 
 <dt><code>--numbers</code>
 <dd>
@@ -94,34 +108,48 @@ you can tell it that the code actually starts on, say, line 1500
 with `--start=1500`,
 so the displayed line numbers will match up with those of the source file you're excerpting.
 
-<dt><code>--just=html</code> or <code>--just=css</code>
+<dt><code>--just= html | css | both</code>
 <dd>
 
-If passed, the output will be *just* the HTML or CSS for the highlighting,
-rather than a JSON object containing both.
-There will be no overall wrapping JSON object.
+Defaults to `html`.
+
+Determines whether the output will be just the highlighted html,
+just the CSS needed to format that HTML,
+or a wrapping JSON object containing both, as `{"html":..., "css":...}`.
+
+<dt><code>--unescape</code>
+<dd>
+
+Does a quick unescape pass over the input HTML, reverting one level of HTML escapes for the standard dangerous HTML characters `&<>'"`, and decimal/hex escapes. Use if your DOM implementation doesn't convert escapes to text. Won't unescape any other HTML escapes, so beware!
 </dl>
 
 ## Using A Bunch In Quick Succession
 
-Instead of the CLI interface, you can instead invoke the `server.py` script in this folder
-to start up a simple local HTTP server on port 8080.
+Instead of the CLI interface, you can instead run the `bs-highlighter-server` command
+to start up a simple local HTTP server.
 This is useful if you're going to do a lot of highlights,
 and don't want to pay Python startup times for every single one.
 
 This server speaks simple `GET` requests,
-with a path equal to the desired highlight language
-and a query param of the json data, like:
+interpreting the path as CLI arguments,
+and the query as the text to highlight, like:
 
-`localhost:8080/webidl?["pre", {}, "interface Foo {};"]`
+`localhost:8080/--output=html webidl?interface Foo {};`
 
 If successful, it will return a 200 OK response,
-whose body is the highlighted markup as JSON.
+whose body is the same output as the command line for the given output,
+except that `--just=html` is always implicitly passed and can't be overridden.
 
-There is not currently any way to pass additional options to the server script.
-Since you have to be running the script directly anyway,
-just modify the `highlighter.highlight()` invocation
-with your desired options.
+If unsuccessful, it will return a 400 response,
+whose body is the error message.
+
+The `bs-highlighter-server` command-line args are simple:
+
+```
+  --quiet      Don't report informational messages.
+  --host HOST  The server host. (default: localhost)
+  --port PORT  The port number. (default: 8080)
+```
 
 ## Using as a normal Python module
 
@@ -141,7 +169,7 @@ print(html)
 The first required input is a JSON-encoded HTML object (see below for details),
 where the text of the HTML is what's going to be highlighted,
 *or* a string of source code that's going to be highlighted.
-(In the example above, `"interface Foo{};` is what will be syntax-highlighted;
+(In the example above, `"interface Foo {};` is what will be syntax-highlighted;
 that string could also be passed by itself.)
 The second is the language to highlight it as,
 which can be [everything that Pygments supports](http://pygments.org/languages/),
