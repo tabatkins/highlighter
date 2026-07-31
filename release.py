@@ -7,7 +7,7 @@ import subprocess
 import sys
 
 
-def createRelease(projectName):
+def createRelease(projectName: str) -> None:
     if not inProjectRoot(projectName):
         print("Run this command from inside the project root folder.")
         sys.exit(1)
@@ -93,7 +93,7 @@ def createRelease(projectName):
     subprocess.check_call(f"git commit -m 'Bump semver to {newVersion}'", shell=True)
 
 
-def inProjectRoot(projectName):
+def inProjectRoot(projectName: str) -> bool:
     # Checks whether the cwd is in the Bikeshed root
     try:
         remotes = subprocess.check_output("git remote -v", stderr=subprocess.DEVNULL, shell=True).decode("utf-8")
@@ -105,7 +105,7 @@ def inProjectRoot(projectName):
         return False
 
 
-def parseSemver(s):
+def parseSemver(s: str) -> list[int]:
     # TODO: replace with the semver module
     return [int(x) for x in s.strip().split(".")]
 
