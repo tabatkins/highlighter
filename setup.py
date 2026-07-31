@@ -21,8 +21,8 @@ setup(
     python_requires=">=3.7",
     entry_points={
         "console_scripts": [
-            "bs-highlight = highlighter:cli",
-            "bs-highlight-server = highlighter:server",
+            "bs-highlighter = highlighter:cli",
+            "bs-highlighter-server = highlighter:server",
         ]
     },
 )
