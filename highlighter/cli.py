@@ -1,21 +1,66 @@
 from __future__ import annotations
 
+import argparse
+import io
+import json
+import sys
+
 from . import highlight
 
 
-def cli() -> None:
-    import argparse
-    import io
-    import json
-    import sys
+def cli(argv: list[str] | None =None) -> None:
+    options = parseArgs(argv)
+    if options.src == "-":
+        inText = sys.stdin.read()
+    else:
+        inText = options.src
 
-    ap = argparse.ArgumentParser(description="Syntax-highlights JSON-encoded HTML.")
+    if options.inputType == "auto":
+        inputType = "json" if inText[0] == "[" else "text"
+    else:
+        inputType = options.inputType
+
+    if inputType == "json":
+        inVal = json.loads(inText, encoding="utf-8")
+    else:
+        inVal = ["pre", {}, inText]
+
+    outVal, css = highlight.highlight(
+        inVal,
+        options.lang,
+        output=options.output,
+        lineNumbers=options.lineNumbers,
+        lineHighlights=options.lineHighlights,
+        lineStart=options.lineStart,
+        unescape=options.unescape,
+    )
+
+    if options.just == "html":
+        if options.output == "html":
+            print(outVal)
+        else:
+            print(json.dumps(outVal))
+    elif options.just == "css":
+        print(css)
+    else:
+        print(json.dumps({"html": outVal, "css": css}))
+
+
+def parseArgs(argv: list[str] | None = None, apArgs: dict[str, t.Any] | None = None) -> argparse.Namespace:
+    """
+    Parses the args from argv, or the sys.argv is not passed.
+    If `throw` is true, will throw errors;
+    othewise, will print to stderr and exit.
+    """
+    if apArgs is None:
+        apArgs = {}
+    ap = argparse.ArgumentParser(description="Syntax-highlights JSON-encoded HTML.", **apArgs)
+    ap.add_argument(
+        "lang", help="What language the input should be highlighted as. Accepts all Pygments languages, plus 'webidl'."
+    )
     ap.add_argument(
         "src",
         help="The input text/markup to be highlighted. Should be either source text, or JSON-encoded HTML of a (possibly marked-up) element whose text should be highlighted. Pass - to take from STDIN.",
-    )
-    ap.add_argument(
-        "lang", help="What language the input should be highlighted as. Accepts all Pygments languages, plus 'webidl'."
     )
     ap.add_argument(
         "--input",
@@ -58,39 +103,5 @@ def cli() -> None:
         default=None,
         help="Returns just the HTML or CSS value (no wrapping JSON object). Default is a JSON wrapper object with 'html' and 'css' keys.",
     )
-    options = ap.parse_args()
-
-    if options.src == "-":
-        inText = sys.stdin.read()
-    else:
-        inText = options.src
-
-    if options.inputType == "auto":
-        inputType = "json" if inText[0] == "[" else "text"
-    else:
-        inputType = options.inputType
-
-    if inputType == "json":
-        inVal = json.loads(inText, encoding="utf-8")
-    else:
-        inVal = ["pre", {}, inText]
-
-    outVal, css = highlight.highlight(
-        inVal,
-        options.lang,
-        output=options.output,
-        lineNumbers=options.lineNumbers,
-        lineHighlights=options.lineHighlights,
-        lineStart=options.lineStart,
-        unescape=options.unescape,
-    )
-
-    if options.just == "html":
-        if isinstance(outVal, str):
-            print(outVal.encode("utf-8"))
-        else:
-            print(json.dumps(outVal).encode("utf-8"))
-    elif options.just == "css":
-        print(css.encode("utf-8"))
-    else:
-        print(json.dumps({"html": outVal, "css": css}).encode("utf-8"))
+    options = ap.parse_args(argv)
+    return options
