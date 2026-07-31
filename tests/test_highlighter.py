@@ -10,6 +10,7 @@ import highlighter
 
 if typing.TYPE_CHECKING:
     from typing import Any
+
     type JSONValue = dict[str, Any] | list[Any] | str | int | float | bool | None
     type Element = list[str | dict[str, str] | Node]
     type Node = Element | str
@@ -20,6 +21,7 @@ def format(data: JSONValue) -> str:
         data = json.loads(data)
     ret = json.dumps(data, indent=2, sort_keys=True)
     return ret
+
 
 def compare(expected: JSONValue, actual: JSONValue) -> deepdiff.DeepDiff | None:
     return deepdiff.DeepDiff(expected, actual, view=deepdiff.helper.COLORED_COMPACT_VIEW)

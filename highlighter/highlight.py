@@ -35,6 +35,7 @@ def die(msg: str, *rargs: t.Any, **kwargs: dict[t.Any, t.Any]) -> t.NoReturn:
 def warn(msg: str, *rargs: t.Any, **kwargs: dict[t.Any, t.Any]) -> t.NoReturn:
     raise SyntaxWarning(msg.format(*rargs, **kwargs))
 
+
 @t.overload
 def highlight(
     html: t.Element | str,
@@ -46,6 +47,7 @@ def highlight(
     unescape: bool = False,
 ) -> tuple[t.Element, str]: ...
 
+
 @t.overload
 def highlight(
     html: t.Element | str,
@@ -56,6 +58,7 @@ def highlight(
     output: t.Literal["html"] = "html",
     unescape: bool = False,
 ) -> tuple[str, str]: ...
+
 
 def highlight(
     html: t.Element | str,

@@ -1,15 +1,14 @@
-#!/usr/bin/env python3
-import argparse
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import json
-import os
-import re
-import sys
-import typing
-import urllib.parse
+from __future__ import annotations
 
+import argparse
+import json
+import re
+import urllib.parse
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+from . import t
+from .cli import parseArgs
 from .highlight import highlight
-from .cli import parseArgs, cli
 
 DEFAULT_PORT_NUMBER = 8080
 
@@ -24,9 +23,9 @@ class MyHandler(BaseHTTPRequestHandler):
         if not data:
             do_400(self, "Nothing to highlight - pass it as the query string.")
             return
-        
+
         try:
-            options = parseArgs(re.split(r"\s+", args) + [data], apArgs={"exit_on_error":False})
+            options = parseArgs(re.split(r"\s+", args) + [data], apArgs={"exit_on_error": False})
         except Exception as err:
             do_400(self, f"Error parsing path as arguments: {err}")
             return
@@ -35,6 +34,7 @@ class MyHandler(BaseHTTPRequestHandler):
             inputType = "json" if data[0] == "[" else "text"
         else:
             inputType = options.inputType
+        inVal: t.Element
         if inputType == "json":
             try:
                 inVal = json.loads(data)
@@ -57,7 +57,7 @@ class MyHandler(BaseHTTPRequestHandler):
             if options.output == "json":
                 outVal = json.dumps(outVal)
             outVal += "\n"
-            #html, css = highlight(data, lang=lang, output="html", unescape=True)
+            # html, css = highlight(data, lang=lang, output="html", unescape=True)
         except Exception as err:
             do_400(self, str(err))
             return
@@ -66,7 +66,7 @@ class MyHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(outVal.encode("utf-8"))
 
-    def log_request(self, *args: typing.Any) -> None:
+    def log_request(self, *args: t.Any) -> None:  # pylint: disable=unused-argument
         return
 
 
@@ -75,6 +75,7 @@ def do_400(handler: MyHandler, msg: str) -> None:
     handler.send_header("Content-type", "text/plain")
     handler.end_headers()
     handler.wfile.write(msg.encode("utf-8"))
+
 
 def server() -> None:
     try:
@@ -85,17 +86,22 @@ def server() -> None:
         )
         ap.add_argument("--quiet", dest="quiet", action="store_true", help="Don't report informational messages.")
         ap.add_argument("--host", dest="host", default="localhost", help="The server host. (default: localhost)")
-        ap.add_argument("--port", dest="port", type=int, default=DEFAULT_PORT_NUMBER, help="The port number. (default: %(default)s)")
+        ap.add_argument(
+            "--port",
+            dest="port",
+            type=int,
+            default=DEFAULT_PORT_NUMBER,
+            help="The port number. (default: %(default)s)",
+        )
         options = ap.parse_args()
-        server = HTTPServer((options.host, options.port), MyHandler)
+        httpd = HTTPServer((options.host, options.port), MyHandler)
         if not options.quiet:
-            print(f"Started httpserver on {options.host}:{options.port}")
+            print(f"Started httpserver on {options.host}:{options.port}")  # noqa: T201
 
         # Wait forever for incoming http requests
-        server.serve_forever()
+        httpd.serve_forever()
 
     except KeyboardInterrupt:
         if not options.quiet:
-            print("^C received, shutting down the web server")
-        server.socket.close()
-
+            print("^C received, shutting down the web server")  # noqa: T201
+        httpd.socket.close()

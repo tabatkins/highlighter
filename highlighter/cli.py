@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import argparse
-import io
 import json
 import sys
+import typing
 
-from . import highlight
+from .highlight import highlight
 
 
-def cli(argv: list[str] | None =None) -> None:
+def cli(argv: list[str] | None = None) -> None:
     options = parseArgs(argv)
     if options.src == "-":
         inText = sys.stdin.read()
@@ -25,7 +25,7 @@ def cli(argv: list[str] | None =None) -> None:
     else:
         inVal = ["pre", {}, inText]
 
-    outVal, css = highlight.highlight(
+    outVal, css = highlight(
         inVal,
         options.lang,
         output=options.output,
@@ -37,16 +37,16 @@ def cli(argv: list[str] | None =None) -> None:
 
     if options.just == "html":
         if options.output == "html":
-            print(outVal)
+            print(outVal)  # noqa: T201
         else:
-            print(json.dumps(outVal))
+            print(json.dumps(outVal))  # noqa: T201
     elif options.just == "css":
-        print(css)
+        print(css)  # noqa: T201
     else:
-        print(json.dumps({"html": outVal, "css": css}))
+        print(json.dumps({"html": outVal, "css": css}))  # noqa: T201
 
 
-def parseArgs(argv: list[str] | None = None, apArgs: dict[str, t.Any] | None = None) -> argparse.Namespace:
+def parseArgs(argv: list[str] | None = None, apArgs: dict[str, typing.Any] | None = None) -> argparse.Namespace:
     """
     Parses the args from argv, or the sys.argv is not passed.
     If `throw` is true, will throw errors;
@@ -56,7 +56,8 @@ def parseArgs(argv: list[str] | None = None, apArgs: dict[str, t.Any] | None = N
         apArgs = {}
     ap = argparse.ArgumentParser(description="Syntax-highlights JSON-encoded HTML.", **apArgs)
     ap.add_argument(
-        "lang", help="What language the input should be highlighted as. Accepts all Pygments languages, plus 'webidl'."
+        "lang",
+        help="What language the input should be highlighted as. Accepts all Pygments languages, plus 'webidl'.",
     )
     ap.add_argument(
         "src",

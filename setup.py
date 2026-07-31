@@ -19,8 +19,10 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     python_requires=">=3.7",
-    entry_points={"console_scripts": [
-        "bs-highlight = highlighter:cli",
-        "bs-highlight-server = highlighter:server",
-    ]},
+    entry_points={
+        "console_scripts": [
+            "bs-highlight = highlighter:cli",
+            "bs-highlight-server = highlighter:server",
+        ]
+    },
 )

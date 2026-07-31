@@ -1,4 +1,4 @@
-__all__ = ["highlight", "cli", "lexers", "server", "styles"]
+__all__ = ["cli", "highlight", "lexers", "server", "styles"]
 
 from . import styles
 from .cli import cli
