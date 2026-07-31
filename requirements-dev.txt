@@ -5,7 +5,7 @@ black==26.3.1
 deepdiff==9.1.0
 mypy==1.20.2
 packaging==26.2
-pylint==4.0.5
+pylint==4.0.6
 pytest==9.1.1
 ruff==0.15.12
 setuptools==82.0.1
