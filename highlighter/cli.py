@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import typing
 
+from . import t
 from .highlight import highlight
 
 
@@ -35,18 +35,25 @@ def cli(argv: list[str] | None = None) -> None:
         unescape=options.unescape,
     )
 
+    print(formatOutput(outVal, css, options))  # noqa: T201
+
+
+def formatOutput(outVal: t.Element | str, css: str, options: argparse.Namespace) -> str:
     if options.just == "html":
-        if options.output == "html":
-            print(outVal)  # noqa: T201
+        if isinstance(outVal, str):
+            return outVal
         else:
-            print(json.dumps(outVal))  # noqa: T201
+            return json.dumps(outVal)
     elif options.just == "css":
-        print(css)  # noqa: T201
+        return css
     else:
-        print(json.dumps({"html": outVal, "css": css}))  # noqa: T201
+        # No need to switch on options.output here;
+        # outval will already either be an HTML string or a JSON object,
+        # both of which will serialize property with dumps here.
+        return json.dumps({"html": outVal, "css": css})
 
 
-def parseArgs(argv: list[str] | None = None, apArgs: dict[str, typing.Any] | None = None) -> argparse.Namespace:
+def parseArgs(argv: list[str] | None = None, apArgs: dict[str, t.Any] | None = None) -> argparse.Namespace:
     """
     Parses the args from argv, or the sys.argv is not passed.
     If `throw` is true, will throw errors;
@@ -61,6 +68,7 @@ def parseArgs(argv: list[str] | None = None, apArgs: dict[str, typing.Any] | Non
     )
     ap.add_argument(
         "src",
+        default="-",
         help="The input text/markup to be highlighted. Should be either source text, or JSON-encoded HTML of a (possibly marked-up) element whose text should be highlighted. Pass - to take from STDIN.",
     )
     ap.add_argument(
@@ -68,14 +76,14 @@ def parseArgs(argv: list[str] | None = None, apArgs: dict[str, typing.Any] | Non
         dest="inputType",
         choices=["auto", "json", "text"],
         default="auto",
-        help="Chooses whether the input is source text, or JSON-encoded HTML whose text should be highlighted. The default 'auto' chooses based on if the first character is [ (json) or not (text).",
+        help="Chooses whether the input is source text, or JSON-encoded HTML whose text should be highlighted. 'auto' chooses based on if the first character is [ (json) or not (text). (default: %(default)s)",
     )
     ap.add_argument(
         "--output",
         dest="output",
         choices=["json", "html"],
         default="json",
-        help="Pass 'json' to output the highlighted results as JSON-encoded HTML, or 'html' to output as an HTML string. Defaults to json.",
+        help="Pass 'json' to output the highlighted results as JSON-encoded HTML, or 'html' to output as an HTML string. (default: %(default)s)",
     )
     ap.add_argument("--numbers", dest="lineNumbers", action="store_true", help="Include line numbers in the output.")
     ap.add_argument(
@@ -89,7 +97,7 @@ def parseArgs(argv: list[str] | None = None, apArgs: dict[str, typing.Any] | Non
         dest="lineStart",
         type=int,
         default=1,
-        help="Dictates what line number the first line of output should be considered as, affecting --numbers and --highlights.",
+        help="Specifies what line number the first line of output should be considered as, affecting --numbers and --highlights. (default: %(default)s)",
     )
     ap.add_argument(
         "--unescape",
@@ -100,9 +108,9 @@ def parseArgs(argv: list[str] | None = None, apArgs: dict[str, typing.Any] | Non
     ap.add_argument(
         "--just",
         dest="just",
-        choices=["html", "css"],
-        default=None,
-        help="Returns just the HTML or CSS value (no wrapping JSON object). Default is a JSON wrapper object with 'html' and 'css' keys.",
+        choices=["both", "html", "css"],
+        default="html",
+        help="Specifies whether you want just the highlighted html, just the CSS needed for that HTML, or both wrapped in a {'html':..., 'css':...} JSON object. (default: %(default)s)",
     )
     options = ap.parse_args(argv)
     return options

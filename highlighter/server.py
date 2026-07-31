@@ -7,7 +7,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from . import t
-from .cli import parseArgs
+from .cli import formatOutput, parseArgs
 from .highlight import highlight
 
 DEFAULT_PORT_NUMBER = 8080
@@ -45,7 +45,7 @@ class MyHandler(BaseHTTPRequestHandler):
             inVal = ["pre", {}, data]
 
         try:
-            outVal, _ = highlight(
+            outVal, css = highlight(
                 inVal,
                 options.lang,
                 output=options.output,
@@ -54,17 +54,13 @@ class MyHandler(BaseHTTPRequestHandler):
                 lineStart=options.lineStart,
                 unescape=options.unescape,
             )
-            if options.output == "json":
-                outVal = json.dumps(outVal)
-            outVal += "\n"
-            # html, css = highlight(data, lang=lang, output="html", unescape=True)
         except Exception as err:
             do_400(self, str(err))
             return
         self.send_response(200)
         self.send_header("Content-type", "text/plain")
         self.end_headers()
-        self.wfile.write(outVal.encode("utf-8"))
+        self.wfile.write(formatOutput(outVal, css, options).encode("utf-8"))
 
     def log_request(self, *args: t.Any) -> None:  # pylint: disable=unused-argument
         return
