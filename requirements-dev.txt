@@ -1,14 +1,14 @@
 -r requirements.txt
 -e ./
 
-black==26.3.1
+black==26.5.1
 deepdiff==9.1.0
-mypy==1.20.2
+mypy==2.3.0
 packaging==26.2
-pylint==4.0.5
+pylint==4.0.6
 pytest==9.1.1
 ruff==0.15.12
-setuptools==82.0.1
+setuptools==83.0.0
 twine==6.2.0
 types-Pygments
 types-setuptools
