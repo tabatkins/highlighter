@@ -51,7 +51,7 @@ See the command-line options in the next section.
 
 ### Command-Line Options
 
-Highlighter has a number of command-line options to customize its operation
+`bs-highlighter` has a number of command-line options to customize its operation
 
 <dl>
 <dt><code>--input = auto | json | text</code>
