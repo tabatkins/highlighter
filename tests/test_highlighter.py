@@ -373,12 +373,39 @@ def test_webidl() -> None:
     assert not diff, str(diff)
 
 
+def test_unescape() -> None:
+    src = ["""interface Foo { Promise&lt;undefined> foo(); };"""]
+    html, _ = highlighter.highlight(["pre", {}, *src], lang="webidl", unescape=True)
+    expected = [
+        "pre",
+        {},
+        ["c-", {"b": ""}, "interface"],
+        " ",
+        ["c-", {"g": ""}, "Foo"],
+        " { ",
+        ["c-", {"b": ""}, "Promise"],
+        "<",
+        ["c-", {"b": ""}, "undefined"],
+        "> ",
+        ["c-", {"g": ""}, "foo"],
+        "(); };",
+    ]
+
+    diff = compare(expected, html)
+    assert not diff, str(diff)
+
+
+def test_needs_unescape() -> None:
+    src = ["""interface Foo { Promise&lt;undefined> foo(); };"""]
+    try:
+        html, _ = highlighter.highlight(["pre", {}, *src], lang="webidl")
+        assert False, "Without unescape, the IDL highlighter should choke."
+    except SyntaxWarning:
+        assert True, "Without unescape, the IDL highlighter should choke."
+
+
 if __name__ == "__main__":
     pass
-    src = ["""
-    interface Foo {
-      undefined bar(DOMString baz, optional long qux);
-    };
-    """]
-    html, _ = highlighter.highlight(["pre", {}, *src], lang="webidl")
+    src = ["""interface Foo { Promise&lt;undefined> foo(); };"""]
+    html, _ = highlighter.highlight(["pre", {}, *src], lang="webidl", unescape=True)
     print(repr(html))
