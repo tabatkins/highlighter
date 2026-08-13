@@ -404,8 +404,24 @@ def test_needs_unescape() -> None:
         assert True, "Without unescape, the IDL highlighter should choke."
 
 
+def test_html_output() -> None:
+    src = ["""interface Foo { Promise<undefined> foo(); };"""]
+    html, _ = highlighter.highlight(["pre", {}, *src], lang="webidl", output="html")
+    expected = '<pre><c- b>interface</c-> <c- g>Foo</c-> { <c- b>Promise</c->&lt;<c- b>undefined</c->&gt; <c- g>foo</c->(); };</pre>'
+
+    assert html == expected
+
+
+def test_html_output_with_unescape() -> None:
+    src = ["""interface Foo { Promise&lt;undefined> foo(); };"""]
+    html, _ = highlighter.highlight(["pre", {}, *src], lang="webidl", unescape=True, output="html")
+    expected = '<pre><c- b>interface</c-> <c- g>Foo</c-> { <c- b>Promise</c->&lt;<c- b>undefined</c->&gt; <c- g>foo</c->(); };</pre>'
+
+    assert html == expected
+
+
 if __name__ == "__main__":
     pass
     src = ["""interface Foo { Promise&lt;undefined> foo(); };"""]
-    html, _ = highlighter.highlight(["pre", {}, *src], lang="webidl", unescape=True)
+    html, _ = highlighter.highlight(["pre", {}, *src], lang="webidl", unescape=True, output="html")
     print(repr(html))
