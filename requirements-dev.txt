@@ -3,11 +3,11 @@
 
 black==26.5.1
 deepdiff==9.1.0
-mypy==2.3.0
-packaging==26.2
-pylint==4.0.6
+mypy==2.3.1
+packaging==26.3
+pylint==4.0.7
 pytest==9.1.1
-ruff==0.15.12
+ruff==0.16.5
 setuptools==83.0.0
 twine==6.2.0
 types-Pygments
